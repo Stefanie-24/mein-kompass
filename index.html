@@ -828,6 +828,7 @@ footer.foot{
   display:inline-flex;
   align-items:center;
   gap:7px;
+  white-space:nowrap;
   transition:background .15s ease, color .15s ease, box-shadow .15s ease;
   box-shadow:0 1px 3px rgba(120,86,78,0.06);
 }
@@ -837,6 +838,15 @@ footer.foot{
   background:var(--rose-deep);
   color:#FFFDF8;
   border-color:var(--rose-deep);
+}
+/* Mobil: kompakter, eine Zeile, kein Umbruch innerhalb der Buttons */
+@media(max-width:600px){
+  .level-nav{gap:5px;margin:0 0 20px;top:6px;}
+  .level-tab{font-size:12.5px;padding:8px 13px;gap:5px;flex:0 0 auto;}
+  .level-tab span{font-size:13px;}
+}
+@media(max-width:360px){
+  .level-tab{font-size:11.5px;padding:7px 10px;}
 }
 
 /* ---- Hub-Startseite ---- */
@@ -913,10 +923,16 @@ footer.foot{
 
 /* ---- generische Hub-Liste ---- */
 .hub-list-item{
-  background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:background .12s ease;
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,var(--surface),var(--bg-soft));
+  border:1px solid var(--border);border-radius:15px;
+  padding:15px 18px 15px 20px;margin-bottom:12px;cursor:pointer;
+  box-shadow:0 1px 3px rgba(120,86,78,0.05);
+  transition:transform .14s ease, box-shadow .18s ease, border-color .18s ease;
 }
-.hub-list-item:hover{background:var(--bg-soft);}
+.hub-list-item::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:999px;background:var(--sand-deep);opacity:.45;transition:opacity .18s ease;}
+.hub-list-item:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(120,86,78,0.12);border-color:var(--border-strong);}
+.hub-list-item:hover::before{opacity:.9;}
 .hub-list-item .hli-title{font-family:'Quicksand',sans-serif;font-weight:600;font-size:15px;color:var(--text);margin:0;letter-spacing:-0.01em;}
 .hub-list-item .hli-body{color:var(--text-dim);font-size:13px;margin:4px 0 0;line-height:1.5;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
@@ -3340,6 +3356,43 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       };
     }
 
+    // ---- Word-Export (.doc via HTML — Word öffnet das direkt) ----
+    function exportWord(filename, title, bodyHtml){
+      const doc = "<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>"+escapeHtml(title)+"</title>"
+        + "<style>body{font-family:Calibri,Arial,sans-serif;color:#33272b;font-size:11pt;line-height:1.5;} h1{font-size:20pt;color:#6E3742;margin:0 0 2px;} h2{font-size:14pt;color:#9C6640;border-bottom:1px solid #e5ded4;padding-bottom:2px;margin:18px 0 6px;} h3{font-size:12pt;color:#4A3238;margin:14px 0 2px;} .meta{color:#8B6F6A;font-size:9pt;margin:2px 0;} .tags{color:#9C7A38;font-size:9pt;} p{margin:4px 0;} hr{border:none;border-top:1px solid #ece4da;margin:12px 0;}</style></head><body>"
+        + bodyHtml + "</body></html>";
+      const blob = new Blob(['﻿'+doc], {type:'application/msword'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download=(filename||'export')+'.doc'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 1500);
+      showToast('📄 Word-Datei erstellt');
+    }
+    function itemWordBlock(it, typeLabel){
+      const esc = s => escapeHtml(s==null?'':String(s));
+      let b = `<h3>${esc(it.title||'—')}</h3>`;
+      const meta=[];
+      if(typeLabel) meta.push(typeLabel);
+      if(it.category) meta.push(esc(it.category));
+      if(it.status) meta.push(esc(it.status));
+      if(it.priority) meta.push('Prio: '+esc(it.priority));
+      if(it.dueDate) meta.push('Fällig: '+esc(it.dueDate));
+      if(it.deadline) meta.push('Zeitraum: '+esc(it.deadline));
+      if(it.source) meta.push('Quelle: '+esc(it.source));
+      if(meta.length) b += `<p class="meta">${meta.join(' · ')}</p>`;
+      if(it.content) b += `<p>${esc(it.content).replace(/\n/g,'<br>')}</p>`;
+      if(it.why) b += `<p><b>Warum:</b> ${esc(it.why)}</p>`;
+      if(it.nextStep) b += `<p><b>Nächster Schritt:</b> ${esc(it.nextStep)}</p>`;
+      if(it.note) b += `<p>${esc(it.note).replace(/\n/g,'<br>')}</p>`;
+      if(Array.isArray(it.subtasks) && it.subtasks.length) b += `<p>${it.subtasks.map(s=>(s.done?'☑':'☐')+' '+esc(s.title)).join('<br>')}</p>`;
+      if(it.tags && it.tags.length) b += `<p class="tags">${it.tags.map(t=>'#'+esc(t)).join('&nbsp;&nbsp;')}</p>`;
+      return b;
+    }
+    function exportItemsWord(heading, items, typeLabel){
+      const head = `<h1>${escapeHtml(heading)}</h1><p class="meta">Exportiert am ${new Date().toLocaleDateString('de-DE')} · ${items.length} ${items.length===1?'Eintrag':'Einträge'}</p><hr>`;
+      const body = head + items.map(it=>itemWordBlock(it, typeLabel)+'<hr>').join('');
+      exportWord(heading.replace(/[^\wäöüÄÖÜß -]/g,'').trim()||'Export', heading, body);
+    }
+
     // ---- Ebenen-Navigation ----
     let currentLevel = 'kompass';
     function switchLevel(level){
@@ -3579,11 +3632,16 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           </div>
           <div class="modal-actions">
             <button type="button" class="mini-pill danger" id="detailDelete">Löschen</button>
+            <button type="button" class="mini-pill" id="detailWord">📄 Word</button>
             <button type="button" class="mini-pill" id="detailEdit">Bearbeiten</button>
           </div>
         `);
 
         // Wiring
+        document.getElementById('detailWord').addEventListener('click', ()=>{
+          const cur=list(type).find(x=>x.id===id)||item;
+          exportWord((cur.title||t.label), (cur.title||t.label), itemWordBlock(cur, t.label));
+        });
         document.getElementById('detailEdit').addEventListener('click', ()=>{
           openForm(type, { item:list(type).find(x=>x.id===id), onSaved:()=>{ onChange(); paint(); } });
         });
@@ -3806,8 +3864,9 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         <button type="button" class="hub-back" id="hubBack">← Übersicht</button>
         <p class="hub-section-title">📚 Wissen</p>
         <p class="hub-section-sub">Was du weißt und behalten möchtest — ${all.length} ${all.length===1?'Eintrag':'Einträge'}.</p>
-        <div style="margin:0 0 16px;">
+        <div style="margin:0 0 16px;display:flex;gap:8px;flex-wrap:wrap;">
           <button type="button" class="btn-small" id="wissenAdd">＋ Wissen hinzufügen</button>
+          ${all.length?`<button type="button" class="btn-small" id="wissenWord" style="background:var(--surface-hover);color:var(--text);">📄 Word-Export</button>`:''}
         </div>
         <div class="hub-search" style="margin-bottom:14px;">
           <span class="ic">🔎</span>
@@ -3819,6 +3878,11 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 
       document.getElementById('hubBack').addEventListener('click', ()=>{ wissenFilter={cat:'',q:''}; renderHome(); });
       document.getElementById('wissenAdd').addEventListener('click', ()=>openForm('knowledge', { onSaved:renderWissen }));
+      const wWord=document.getElementById('wissenWord');
+      if(wWord) wWord.addEventListener('click', ()=>{
+        const heading = 'Wissen'+(wissenFilter.cat?' – '+wissenFilter.cat:'');
+        exportItemsWord(heading, items, 'Wissen');
+      });
       root.querySelectorAll('[data-cat]').forEach(b=> b.addEventListener('click', ()=>{ wissenFilter.cat=b.dataset.cat; renderWissen(); }));
       const se = document.getElementById('wissenSearch');
       se.addEventListener('input', ()=>{
