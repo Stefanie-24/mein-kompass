@@ -1202,6 +1202,11 @@ input[type=file]{font-family:'Quicksand',sans-serif;font-size:13px;color:var(--t
 .jr-insight-title{font-weight:700;color:var(--text);font-size:14.5px;margin:0 0 2px;}
 .jr-insight-desc{font-size:13px;color:var(--text-dim);margin:0;}
 .jr-insight-meta{font-size:11px;color:var(--text-faint);margin-top:3px;}
+/* Journal-Eintrag Lese-Ansicht */
+.jr-read-label{font-family:'Quicksand',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--rose-deep);margin:16px 0 8px;}
+.jr-read-row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);font-size:13.5px;color:var(--text);}
+.jr-read-row:last-child{border-bottom:none;}
+.jr-read-val{color:var(--text-dim);font-family:'Inter Tight','Inter',sans-serif;font-variant-numeric:tabular-nums;text-align:right;}
 </style>
 <script type="module">
 // ================= FIREBASE CONFIG =================
@@ -4023,6 +4028,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     // Öffnet die passende Detailansicht je Typ (Aufgaben haben ihre eigene).
     function openAnyDetail(type, id, cb){
       if(type==='task') Tasks.openDetail(id);
+      else if(type==='journal') Journal.openEntry(id, cb);
       else openDetail(type, id, cb);
     }
 
@@ -4746,7 +4752,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           <div class="card"><div class="row-between"><p class="jr-label" style="margin:0;">Letzte Erkenntnisse</p><button type="button" class="btn-text" id="goInsights">alle ansehen</button></div>${insights.length===0?`<p style="color:var(--text-faint);margin-top:10px;">Noch keine Erkenntnisse.</p>`:`<div style="margin-top:12px;">${insights.map(i=>`<div class="jr-insight"><p class="jr-insight-title">${escapeHtml(i.title)}</p><p class="jr-insight-desc">${escapeHtml(i.description)}</p></div>`).join('')}</div>`}</div>`;
         document.getElementById('goCheckin').addEventListener('click', ()=>showTab('checkin'));
         const gi=document.getElementById('goInsights'); if(gi) gi.addEventListener('click', ()=>showTab('insights'));
-        el.querySelectorAll('.hub-list-item[data-open]').forEach(x=> x.addEventListener('click', ()=>openDetail('journal', x.dataset.open, ()=>showTab('dashboard'))));
+        el.querySelectorAll('.hub-list-item[data-open]').forEach(x=> x.addEventListener('click', ()=>openEntry(x.dataset.open, ()=>showTab('dashboard'))));
         if(weekEntries.length>1){ renderChart('dashWeekChart', { type:'line', data:{ labels:weekEntries.map(e=>e.date.slice(5)), datasets:[ {label:'Stimmung',data:weekEntries.map(e=>e.mood??null),borderColor:CC.mood,tension:0.3},{label:'Energie',data:weekEntries.map(e=>e.energy??null),borderColor:CC.energy,tension:0.3},{label:'Stress',data:weekEntries.map(e=>e.stress??null),borderColor:CC.stress,tension:0.3} ] }, options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:1,max:10}}} }); }
       }
 
@@ -4894,7 +4900,63 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         finally{ event.target.value=''; }
       }
 
-      return { open };
+      // ---- Vollständige Lese-Ansicht eines Journal-Eintrags ----
+      function openEntry(id, onChange){
+        onChange = onChange || (()=>{ if(currentLevel==='journal' || currentLevel==='hub') { /* Hintergrund bleibt */ } });
+        function paint(){
+          const e = list('journal').find(x=>x.id===id);
+          if(!e){ closeModal(); return; }
+          const isToday = e.date===todayISO();
+          const num = v => (typeof v==='number' ? v : '–');
+          const hasScores = ['mood','energy','stress'].some(k=>typeof e[k]==='number');
+          const scoresHtml = hasScores ? `<div class="stat-grid" style="margin:0 0 16px;">
+            <div class="stat-box"><div class="num">${num(e.mood)}</div><div class="lbl">Stimmung</div></div>
+            <div class="stat-box"><div class="num">${num(e.energy)}</div><div class="lbl">Energie</div></div>
+            <div class="stat-box"><div class="num">${num(e.stress)}</div><div class="lbl">Stress</div></div></div>` : '';
+          const emoHtml = (e.emotions&&e.emotions.length) ? `<p class="jr-read-label">Emotionen</p><div class="chip-row" style="margin-bottom:16px;">${e.emotions.map(x=>`<span class="chip" style="cursor:default;">${escapeHtml(x)}</span>`).join('')}</div>` : '';
+          const text = e.journalText || e.content || '';
+          const textHtml = text ? `<p class="jr-read-label">Journal</p><p class="detail-body">${escapeHtml(text)}</p>` : '';
+          const refl = e.reflections||{};
+          const reflAnswered = REFLECTION_QUESTIONS.filter(q=>(refl[q.id]||'').trim());
+          const reflHtml = reflAnswered.length ? `<p class="jr-read-label">Reflexion</p>`+reflAnswered.map(q=>`<div style="margin-bottom:12px;"><p style="margin:0 0 3px;font-size:12.5px;font-weight:600;color:var(--text);">${escapeHtml(q.text)}</p><p class="detail-body" style="margin:0;">${escapeHtml(refl[q.id])}</p></div>`).join('') : '';
+          const habits = J.getHabits();
+          const hname = i2 => (habits.find(h=>h.id===i2)||{}).name || i2;
+          const hicon = i2 => (habits.find(h=>h.id===i2)||{}).icon || '✨';
+          const habHtml = (e.habitsCompleted&&e.habitsCompleted.length) ? `<p class="jr-read-label">Gewohnheiten</p><div class="chip-row" style="margin-bottom:16px;">${e.habitsCompleted.map(h=>`<span class="chip active" style="cursor:default;">${hicon(h)} ${escapeHtml(hname(h))}</span>`).join('')}</div>` : '';
+          const la = e.lifeAreaRatings||{};
+          const laHtml = LIFE_AREAS.some(a=>typeof la[a.id]==='number') ? `<p class="jr-read-label">Lebensbereiche</p><div style="margin-bottom:16px;">${LIFE_AREAS.filter(a=>typeof la[a.id]==='number').map(a=>`<div class="jr-read-row"><span>${escapeHtml(a.label)}</span><span class="jr-read-val">${la[a.id]}/10</span></div>`).join('')}</div>` : '';
+          const goals = J.getGoals();
+          const gtitle = i2 => (goals.find(g=>g.id===i2)||{}).title || 'Ziel';
+          const gp = (e.goalProgress||[]).filter(p=>p.done || (p.note||'').trim());
+          const gpHtml = gp.length ? `<p class="jr-read-label">Ziele – heute etwas getan?</p><div style="margin-bottom:16px;">${gp.map(p=>`<div class="jr-read-row"><span>${p.done?'✅':'▫️'} ${escapeHtml(gtitle(p.goalId))}</span>${p.note?`<span class="jr-read-val">${escapeHtml(p.note)}</span>`:''}</div>`).join('')}</div>` : '';
+          const tagsHtml = (e.tags&&e.tags.length) ? `<div style="margin:0 0 12px;">${e.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join(' ')}</div>` : '';
+          const grouped = linkedItemsByType(e);
+          const linkHtml = LINKABLE.filter(tp=>tp!=='journal'&&grouped[tp]&&grouped[tp].length).map(tp=>`<div class="link-group"><span class="link-group-label">${TYPES[tp].emoji} ${TYPES[tp].plural}</span><div class="link-chips">${grouped[tp].map(li=>`<span class="link-chip" data-goto="${li.id}" data-gototype="${tp}">${escapeHtml(li.title||TYPES[tp].label)}<button type="button" class="link-x" data-unlink="${tp}:${li.id}" aria-label="Verknüpfung entfernen">✕</button></span>`).join('')}</div></div>`).join('');
+          const nothing = !hasScores && !emoHtml && !textHtml && !reflHtml && !habHtml && !laHtml && !gpHtml;
+          openModal(`
+            <h3 id="modalTitle">📔 ${escapeHtml(e.title || ('Eintrag '+(e.date||'')))}</h3>
+            <p class="detail-meta">${e.date?formatWeekday(e.date)+', '+formatDateLong(e.date):''}</p>
+            ${scoresHtml}${emoHtml}${textHtml}${reflHtml}${habHtml}${laHtml}${gpHtml}
+            ${nothing?'<p class="detail-body" style="color:var(--text-faint);">Dieser Eintrag enthält noch keinen Text.</p>':''}
+            ${tagsHtml}
+            <div class="detail-links">
+              <div class="row-between" style="align-items:center;"><h4 style="margin:16px 0 8px;">Verknüpft mit</h4><button type="button" class="mini-pill" id="jeLink">🔗 Verknüpfen</button></div>
+              ${linkHtml||'<p class="detail-body" style="color:var(--text-faint);margin:0;">Noch nichts verknüpft.</p>'}
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="mini-pill danger" id="jeDel">Löschen</button>
+              ${isToday?'<button type="button" class="mini-pill" id="jeEdit">In „Heute" bearbeiten</button>':''}
+            </div>`);
+          document.getElementById('jeDel').addEventListener('click', ()=>{ if(!confirm('Eintrag wirklich löschen?')) return; removeWithLinks('journal', id); closeModal(); showToast('Gelöscht'); onChange(); });
+          document.getElementById('jeLink').addEventListener('click', ()=>openLinkPicker('journal', id, ()=>{ onChange(); paint(); }));
+          const je=document.getElementById('jeEdit'); if(je) je.addEventListener('click', ()=>{ closeModal(); showTab('checkin'); });
+          contentEl().querySelectorAll('[data-unlink]').forEach(b=> b.addEventListener('click', (ev)=>{ ev.stopPropagation(); const [tp,iid]=b.dataset.unlink.split(':'); toggleLink('journal', id, tp, iid, false); onChange(); paint(); }));
+          contentEl().querySelectorAll('[data-goto]').forEach(el=> el.addEventListener('click', (ev)=>{ if(ev.target.closest('[data-unlink]')) return; openAnyDetail(el.dataset.gototype, el.dataset.goto, onChange); }));
+        }
+        paint();
+      }
+
+      return { open, openEntry };
     })();
 
     // ---- Init: Navigation, FAB, Modal verdrahten ----
