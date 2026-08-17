@@ -1207,6 +1207,10 @@ input[type=file]{font-family:'Quicksand',sans-serif;font-size:13px;color:var(--t
 .jr-read-row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);font-size:13.5px;color:var(--text);}
 .jr-read-row:last-child{border-bottom:none;}
 .jr-read-val{color:var(--text-dim);font-family:'Inter Tight','Inter',sans-serif;font-variant-numeric:tabular-nums;text-align:right;}
+.jr-goal-item{padding:9px 0;border-bottom:1px solid var(--border);}
+.jr-goal-item:last-child{border-bottom:none;}
+.jr-goal-title{margin:0;font-weight:600;font-size:14px;color:var(--text);}
+.jr-goal-note{margin:5px 0 0;font-size:13px;line-height:1.5;color:var(--text-dim);}
 </style>
 <script type="module">
 // ================= FIREBASE CONFIG =================
@@ -4928,7 +4932,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           const goals = J.getGoals();
           const gtitle = i2 => (goals.find(g=>g.id===i2)||{}).title || 'Ziel';
           const gp = (e.goalProgress||[]).filter(p=>p.done || (p.note||'').trim());
-          const gpHtml = gp.length ? `<p class="jr-read-label">Ziele – heute etwas getan?</p><div style="margin-bottom:16px;">${gp.map(p=>`<div class="jr-read-row"><span>${p.done?'✅':'▫️'} ${escapeHtml(gtitle(p.goalId))}</span>${p.note?`<span class="jr-read-val">${escapeHtml(p.note)}</span>`:''}</div>`).join('')}</div>` : '';
+          const gpHtml = gp.length ? `<p class="jr-read-label">Ziele – heute etwas getan?</p><div style="margin-bottom:16px;">${gp.map(p=>`<div class="jr-goal-item"><p class="jr-goal-title">${p.done?'✅':'▫️'} ${escapeHtml(gtitle(p.goalId))}</p>${p.note?`<p class="jr-goal-note">${escapeHtml(p.note)}</p>`:''}</div>`).join('')}</div>` : '';
           const tagsHtml = (e.tags&&e.tags.length) ? `<div style="margin:0 0 12px;">${e.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join(' ')}</div>` : '';
           const grouped = linkedItemsByType(e);
           const linkHtml = LINKABLE.filter(tp=>tp!=='journal'&&grouped[tp]&&grouped[tp].length).map(tp=>`<div class="link-group"><span class="link-group-label">${TYPES[tp].emoji} ${TYPES[tp].plural}</span><div class="link-chips">${grouped[tp].map(li=>`<span class="link-chip" data-goto="${li.id}" data-gototype="${tp}">${escapeHtml(li.title||TYPES[tp].label)}<button type="button" class="link-x" data-unlink="${tp}:${li.id}" aria-label="Verknüpfung entfernen">✕</button></span>`).join('')}</div></div>`).join('');
