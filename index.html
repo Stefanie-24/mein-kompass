@@ -3359,7 +3359,17 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     // ---- Word-Export (.doc via HTML — Word öffnet das direkt) ----
     function exportWord(filename, title, bodyHtml){
       const doc = "<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>"+escapeHtml(title)+"</title>"
-        + "<style>body{font-family:Calibri,Arial,sans-serif;color:#33272b;font-size:11pt;line-height:1.5;} h1{font-size:20pt;color:#6E3742;margin:0 0 2px;} h2{font-size:14pt;color:#9C6640;border-bottom:1px solid #e5ded4;padding-bottom:2px;margin:18px 0 6px;} h3{font-size:12pt;color:#4A3238;margin:14px 0 2px;} .meta{color:#8B6F6A;font-size:9pt;margin:2px 0;} .tags{color:#9C7A38;font-size:9pt;} p{margin:4px 0;} hr{border:none;border-top:1px solid #ece4da;margin:12px 0;}</style></head><body>"
+        + "<style>"
+        + "body{font-family:Arial,sans-serif;color:#2b2b2b;font-size:12pt;line-height:1.5;}"
+        + "h1{font-family:'Modern Love Caps',Arial,sans-serif;font-size:20pt;color:#4A3238;margin:0 0 4px;}"
+        + "h2{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#4A3238;margin:18px 0 6px;border-bottom:1px solid #e5ded4;padding-bottom:2px;}"
+        + "h3{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#4A3238;margin:14px 0 2px;}"
+        + "p{font-family:Arial,sans-serif;font-size:12pt;margin:4px 0;}"
+        + ".meta{font-family:Arial,sans-serif;color:#777777;font-size:10pt;margin:2px 0;}"
+        + ".tags{font-family:Arial,sans-serif;color:#9C7A38;font-size:10pt;}"
+        + "b{font-family:Arial,sans-serif;}"
+        + "hr{border:none;border-top:1px solid #ece4da;margin:12px 0;}"
+        + "</style></head><body>"
         + bodyHtml + "</body></html>";
       const blob = new Blob(['﻿'+doc], {type:'application/msword'});
       const url = URL.createObjectURL(blob);
