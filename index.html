@@ -1004,6 +1004,20 @@ footer.foot{
 .detail-body{color:var(--text);font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin:0 0 14px;}
 .detail-links h4{font-family:'Quicksand',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:16px 0 8px;}
 
+/* ---- Bilder (Wissen) ---- */
+.qa-hint{font-size:11px;color:var(--text-faint);margin:6px 0 0;}
+input[type=file]{font-family:'Quicksand',sans-serif;font-size:13px;color:var(--text-dim);}
+.img-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.img-thumb{position:relative;width:74px;height:74px;border-radius:10px;overflow:hidden;border:1px solid var(--border-strong);}
+.img-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.img-del{position:absolute;top:3px;right:3px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(74,50,56,0.66);color:#fff;font-size:11px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}
+.img-del:hover{background:var(--wine-deep);}
+.detail-gallery{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;}
+.detail-thumb{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--border);cursor:zoom-in;transition:transform .12s ease;}
+.detail-thumb:hover{transform:scale(1.03);}
+.lightbox{position:fixed;inset:0;z-index:80;background:rgba(30,20,24,0.86);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out;}
+.lightbox img{max-width:96%;max-height:96%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
+
 /* ---- Filter-Chips (Kategorien) ---- */
 .cat-row{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 18px;}
 .cat-chip{
@@ -1814,6 +1828,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     hubInbox:'kompass_hub_inbox',
     hubSelf:'kompass_hub_self',
     hubTasks:'kompass_hub_tasks',
+    hubKnowledgeImages:'kompass_hub_knowledge_images',
     // ---- Journal-interne Buckets (integriert aus bestehender Journal-App) ----
     journalHabits:'kompass_journal_habits',
     journalDailyGoals:'kompass_journal_dailygoals',
@@ -3270,6 +3285,37 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       return [...new Set(list(type).flatMap(x=>x.tags||[]))].sort((a,b)=>a.localeCompare(b,'de'));
     }
 
+    // ---- Bilder (Wissen) ----
+    // Getrennt vom Text gespeichert (entryId -> [dataURL]), damit der Text-Sync
+    // nie durch Bildgröße blockiert wird. Bilder werden vorher verkleinert.
+    function getImages(id){ const all=load(KEYS.hubKnowledgeImages, {}); return all[id]||[]; }
+    function setImages(id, arr){ const all=load(KEYS.hubKnowledgeImages, {}); if(arr && arr.length) all[id]=arr; else delete all[id]; save(KEYS.hubKnowledgeImages, all); }
+    function compressImage(file, maxDim, quality){
+      maxDim = maxDim || 1100; quality = quality || 0.72;
+      return new Promise((resolve, reject)=>{
+        const reader = new FileReader();
+        reader.onerror = ()=>reject(new Error('Datei konnte nicht gelesen werden'));
+        reader.onload = ()=>{
+          const img = new Image();
+          img.onerror = ()=>reject(new Error('Bild konnte nicht geladen werden'));
+          img.onload = ()=>{
+            let w = img.width, h = img.height;
+            if(w >= h && w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; }
+            else if(h > w && h > maxDim){ w = Math.round(w*maxDim/h); h = maxDim; }
+            else if(w === h && w > maxDim){ w = h = maxDim; }
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            const ctx = c.getContext('2d');
+            if(!ctx){ resolve(reader.result); return; }
+            ctx.drawImage(img, 0, 0, w, h);
+            try { resolve(c.toDataURL('image/jpeg', quality)); }
+            catch(e){ resolve(reader.result); }
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
     // ---- Verknüpfungen (bidirektional, ID-basiert) ----
     function toggleLink(typeA, idA, typeB, idB, on){
       const a = list(typeA).find(x=>x.id===idA);
@@ -3313,6 +3359,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           (L[lk]||[]).forEach(otherId=>{ toggleLink(type, id, tp, otherId, false); });
         });
       }
+      if(type==='knowledge') setImages(id, []); // zugehörige Bilder entfernen
       remove(type, id);
     }
 
@@ -3394,6 +3441,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       if(it.nextStep) b += `<p><b>Nächster Schritt:</b> ${esc(it.nextStep)}</p>`;
       if(it.note) b += `<p>${esc(it.note).replace(/\n/g,'<br>')}</p>`;
       if(Array.isArray(it.subtasks) && it.subtasks.length) b += `<p>${it.subtasks.map(s=>(s.done?'☑':'☐')+' '+esc(s.title)).join('<br>')}</p>`;
+      if(it.type==='knowledge'){ const imgs=getImages(it.id); if(imgs.length) b += `<p>${imgs.map(s=>`<img src="${s}" style="max-width:420px;margin:6px 0;"/>`).join('<br>')}</p>`; }
       if(it.tags && it.tags.length) b += `<p class="tags">${it.tags.map(t=>'#'+esc(t)).join('&nbsp;&nbsp;')}</p>`;
       return b;
     }
@@ -3430,6 +3478,15 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     function closeModal(){
       overlay().style.display = 'none';
       contentEl().innerHTML = '';
+    }
+    // Bild groß anzeigen (einfache Lightbox)
+    function showLightbox(src){
+      const ov = document.createElement('div');
+      ov.className = 'lightbox';
+      const img = document.createElement('img');
+      img.src = src; ov.appendChild(img);
+      ov.addEventListener('click', ()=>ov.remove());
+      document.body.appendChild(ov);
     }
 
     // ---- Quick Add ----
@@ -3481,6 +3538,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         const dl = knownCategories('knowledge').map(c=>`<option value="${escapeHtml(c)}">`).join('');
         html += field('Kategorie', `<input type="text" id="qaCategory" list="qaCatList" placeholder="z.B. Persönlichkeitsentwicklung"${attr(item.category)}><datalist id="qaCatList">${dl}</datalist>`);
         html += field('Quelle', `<input type="text" id="qaSource" placeholder="z.B. eigenes Journal"${attr(item.source)}>`);
+        html += field('Bilder', `<input type="file" id="qaImages" accept="image/*" multiple><div id="qaImgPreview" class="img-preview"></div><p class="qa-hint">Bilder werden automatisch verkleinert und mitgespeichert.</p>`);
       }
       const progVal = typeof item.progress==='number' ? item.progress : 0;
       const progField = field(`Fortschritt: <span id="qaProgVal">${progVal}</span>%`, `<input type="range" id="qaProgress" min="0" max="100" step="5" value="${progVal}">`);
@@ -3528,6 +3586,29 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       if(titleEl) titleEl.focus();
       const progEl = document.getElementById('qaProgress');
       if(progEl){ progEl.addEventListener('input', ()=>{ const l=document.getElementById('qaProgVal'); if(l) l.textContent=progEl.value; }); }
+
+      // Bilder (nur Wissen)
+      let pendingImages = [];
+      if(type==='knowledge'){
+        pendingImages = editItem ? getImages(editItem.id).slice() : [];
+        const prev = document.getElementById('qaImgPreview');
+        const renderPrev = ()=>{
+          prev.innerHTML = pendingImages.map((src,i)=>`<div class="img-thumb"><img src="${src}" alt=""><button type="button" class="img-del" data-imgdel="${i}" aria-label="Bild entfernen">✕</button></div>`).join('');
+          prev.querySelectorAll('[data-imgdel]').forEach(b=> b.addEventListener('click', ()=>{ pendingImages.splice(Number(b.dataset.imgdel),1); renderPrev(); }));
+        };
+        renderPrev();
+        const fileInput = document.getElementById('qaImages');
+        fileInput.addEventListener('change', async (e)=>{
+          const files = [...(e.target.files||[])];
+          const btnLbl = fileInput.previousSibling;
+          for(const f of files){
+            try{ const dataUrl = await compressImage(f); pendingImages.push(dataUrl); }
+            catch(err){ showToast('Ein Bild konnte nicht geladen werden'); }
+          }
+          e.target.value=''; renderPrev();
+        });
+      }
+
       document.getElementById('qaCancel').addEventListener('click', closeModal);
       form.addEventListener('submit', (e)=>{
         e.preventDefault();
@@ -3547,6 +3628,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         if(document.getElementById('qaPriority')) data.priority = val('qaPriority');
         if(!data.title && !data.content){ showToast('Bitte etwas eingeben'); return; }
         if(!data.title && data.content){ data.title = data.content.slice(0,60); }
+        let savedId = editItem ? editItem.id : null;
         if(editItem){
           update(type, editItem.id, data);
           showToast(t.emoji + ' ' + t.label + ' aktualisiert');
@@ -3555,9 +3637,11 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           addJournalEntry({ title:data.title, content:data.content, tags:data.tags||[], kind:'note', date:(new Date()).toISOString().slice(0,10) });
           showToast('📔 Journal-Eintrag gespeichert');
         } else {
-          add(type, data);
+          const created = add(type, data);
+          savedId = created && created.id;
           showToast(t.emoji + ' ' + t.label + ' gespeichert');
         }
+        if(type==='knowledge' && savedId) setImages(savedId, pendingImages);
         closeModal();
         if(currentLevel==='hub') onSaved();
       });
@@ -3617,6 +3701,10 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
             </div>
           </div>`).join('');
 
+        // Bilder-Galerie (nur Wissen)
+        const imgs = type==='knowledge' ? getImages(id) : [];
+        const galleryHtml = imgs.length ? `<div class="detail-gallery">${imgs.map((s,i)=>`<img src="${s}" class="detail-thumb" data-imgidx="${i}" alt="Bild ${i+1}">`).join('')}</div>` : '';
+
         openModal(`
           <h3 id="modalTitle">${t.emoji} ${escapeHtml(item.title||t.label)}</h3>
           <p class="detail-meta">
@@ -3631,6 +3719,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           ${item.nextStep?`<div class="next-step">➡️ <strong>Nächster Schritt:</strong> ${escapeHtml(item.nextStep)}</div>`:''}
           ${item.deadline?`<p class="detail-body"><strong>Zeitraum:</strong> ${escapeHtml(item.deadline)}</p>`:''}
           ${item.source?`<p class="detail-body"><strong>Quelle:</strong> ${escapeHtml(item.source)}</p>`:''}
+          ${galleryHtml}
           ${tagsHtml?`<div style="margin:0 0 12px;">${tagsHtml}</div>`:''}
           ${tasksHtml}
           <div class="detail-links">
@@ -3681,6 +3770,10 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         contentEl().querySelectorAll('[data-goto]').forEach(el=> el.addEventListener('click', (e)=>{
           if(e.target.closest('[data-unlink]')) return;
           openDetail(el.dataset.gototype, el.dataset.goto, onChange);
+        }));
+        // Bilder groß anzeigen
+        contentEl().querySelectorAll('[data-imgidx]').forEach(el=> el.addEventListener('click', ()=>{
+          const arr = getImages(id); const s = arr[Number(el.dataset.imgidx)]; if(s) showLightbox(s);
         }));
       }
       paint();
