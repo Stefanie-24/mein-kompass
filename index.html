@@ -3930,9 +3930,10 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       const tagsHtml = (it.tags||[]).slice(0,4).map(tg=>`<span class="tag">#${escapeHtml(tg)}</span>`).join(' ');
       const badge = opts.hideTypeBadge ? '' : `<span class="tag" style="background:var(--rose-soft);color:var(--rose-deep);">${TYPES[type].emoji} ${TYPES[type].label}</span>`;
       const catBadge = (opts.showCat && it.category) ? `<span class="hli-cat">${escapeHtml(it.category)}</span>` : '';
+      const displayTitle = (it.title || TYPES[type].label).replace('Check-in · ', 'Check-in ');
       return `
         <div class="hub-list-item" data-open="${it.id}" data-type="${type}">
-          <p class="hli-title">${escapeHtml(it.title || TYPES[type].label)}</p>
+          <p class="hli-title">${escapeHtml(displayTitle)}</p>
           ${it.content?`<p class="hli-body">${escapeHtml(it.content)}</p>`:''}
           <div class="hli-foot">${badge}${catBadge} ${tagsHtml}</div>
         </div>`;
@@ -4546,7 +4547,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           const ex = checkinForDate(date);
           const data = Object.assign({}, patch, { content: (patch.journalText||'').trim() });
           if(ex){ return update('journal', ex.id, data); }
-          return addJournalEntry(Object.assign({ kind:'checkin', date, title:'Check-in · '+formatDateLong(date) }, data));
+          return addJournalEntry(Object.assign({ kind:'checkin', date, title:'Check-in '+formatDateLong(date) }, data));
         },
         getHabits(){ return load(KEYS.journalHabits, DEFAULT_HABITS); },
         saveHabits(l){ save(KEYS.journalHabits, l); },
@@ -4752,7 +4753,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           <div class="card"><div class="row-between"><p class="jr-label" style="margin:0;">Heute</p><button type="button" class="btn-text" id="goCheckin">${entry?'bearbeiten':'Check-in starten'}</button></div>${entry?`<div class="stat-grid" style="margin-top:14px;"><div class="stat-box"><div class="num">${entry.mood??'–'}</div><div class="lbl">Stimmung</div></div><div class="stat-box"><div class="num">${entry.energy??'–'}</div><div class="lbl">Energie</div></div><div class="stat-box"><div class="num">${entry.stress??'–'}</div><div class="lbl">Stress</div></div></div>`:`<p style="color:var(--text-faint);margin-top:10px;">Noch kein Check-in für heute — nimm dir einen Moment für dich.</p>`}</div>
           <div class="card"><p class="jr-label">Woche im Überblick</p>${weekEntries.length>1?`<div class="chart-box"><canvas id="dashWeekChart"></canvas></div>`:`<p style="color:var(--text-faint);">Noch nicht genug Daten diese Woche für einen Trend.</p>`}</div>
           <div class="grid-2" style="margin-bottom:16px;"><div class="card" style="margin-bottom:0;"><div class="stat-box"><div class="num">${avg(monthEntries,'mood')}</div><div class="lbl">Ø Stimmung (Monat)</div></div></div><div class="card" style="margin-bottom:0;"><div class="stat-box"><div class="num">${avg(monthEntries,'energy')}</div><div class="lbl">Ø Energie (Monat)</div></div></div></div>
-          <div class="card"><div class="row-between"><p class="jr-label" style="margin:0;">Zuletzt geschrieben</p></div>${recent.length?`<div style="margin-top:10px;">${recent.map(e=>`<div class="hub-list-item" data-open="${e.id}" data-type="journal" style="margin-bottom:8px;"><p class="hli-title">${escapeHtml(e.title||('Eintrag '+e.date))}</p>${e.journalText?`<p class="hli-body">${escapeHtml(e.journalText)}</p>`:''}<div class="hli-foot"><span class="tag">${e.date}</span></div></div>`).join('')}</div>`:`<p style="color:var(--text-faint);margin-top:8px;">Noch keine Einträge.</p>`}</div>
+          <div class="card"><div class="row-between"><p class="jr-label" style="margin:0;">Zuletzt geschrieben</p></div>${recent.length?`<div style="margin-top:10px;">${recent.map(e=>`<div class="hub-list-item" data-open="${e.id}" data-type="journal" style="margin-bottom:8px;"><p class="hli-title">${escapeHtml(e.kind==='checkin'?('Check-in '+formatDateLong(e.date)):(e.title||('Eintrag '+e.date)))}</p>${e.journalText?`<p class="hli-body">${escapeHtml(e.journalText)}</p>`:''}<div class="hli-foot"><span class="tag">${e.date}</span></div></div>`).join('')}</div>`:`<p style="color:var(--text-faint);margin-top:8px;">Noch keine Einträge.</p>`}</div>
           <div class="card"><div class="row-between"><p class="jr-label" style="margin:0;">Letzte Erkenntnisse</p><button type="button" class="btn-text" id="goInsights">alle ansehen</button></div>${insights.length===0?`<p style="color:var(--text-faint);margin-top:10px;">Noch keine Erkenntnisse.</p>`:`<div style="margin-top:12px;">${insights.map(i=>`<div class="jr-insight"><p class="jr-insight-title">${escapeHtml(i.title)}</p><p class="jr-insight-desc">${escapeHtml(i.description)}</p></div>`).join('')}</div>`}</div>`;
         document.getElementById('goCheckin').addEventListener('click', ()=>showTab('checkin'));
         const gi=document.getElementById('goInsights'); if(gi) gi.addEventListener('click', ()=>showTab('insights'));
@@ -4879,7 +4880,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
             const date=e.date || (e.updatedAt||'').slice(0,10); if(!date) return;
             if(existingDates.has(date)) return;
             const now=new Date().toISOString();
-            toAdd.push({ id:uid(), type:'journal', kind:'checkin', date, title:'Check-in · '+date,
+            toAdd.push({ id:uid(), type:'journal', kind:'checkin', date, title:'Check-in '+date,
               content:(e.journalText||'').trim(), journalText:e.journalText||'', mood:e.mood, energy:e.energy, stress:e.stress,
               emotions:e.emotions||[], reflections:e.reflections||{}, habitsCompleted:e.habitsCompleted||[], lifeAreaRatings:e.lifeAreaRatings||{}, goalProgress:e.goalProgress||[],
               tags:[], links:emptyLinks(), createdAt:e.createdAt||now, updatedAt:now });
@@ -4938,7 +4939,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           const linkHtml = LINKABLE.filter(tp=>tp!=='journal'&&grouped[tp]&&grouped[tp].length).map(tp=>`<div class="link-group"><span class="link-group-label">${TYPES[tp].emoji} ${TYPES[tp].plural}</span><div class="link-chips">${grouped[tp].map(li=>`<span class="link-chip" data-goto="${li.id}" data-gototype="${tp}">${escapeHtml(li.title||TYPES[tp].label)}<button type="button" class="link-x" data-unlink="${tp}:${li.id}" aria-label="Verknüpfung entfernen">✕</button></span>`).join('')}</div></div>`).join('');
           const nothing = !hasScores && !emoHtml && !textHtml && !reflHtml && !habHtml && !laHtml && !gpHtml;
           openModal(`
-            <h3 id="modalTitle">📔 ${escapeHtml(e.title || ('Eintrag '+(e.date||'')))}</h3>
+            <h3 id="modalTitle">📔 ${escapeHtml(e.kind==='checkin'?('Check-in '+formatDateLong(e.date)):(e.title || ('Eintrag '+(e.date||''))))}</h3>
             <p class="detail-meta">${e.date?formatWeekday(e.date)+', '+formatDateLong(e.date):''}</p>
             ${scoresHtml}${emoHtml}${textHtml}${reflHtml}${habHtml}${laHtml}${gpHtml}
             ${nothing?'<p class="detail-body" style="color:var(--text-faint);">Dieser Eintrag enthält noch keinen Text.</p>':''}
