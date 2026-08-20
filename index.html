@@ -9,22 +9,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Quicksand:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root{
-  --bg:#F7F0E6;
-  --bg-soft:#FBF3EC;
-  --surface:#FFFDF8;
-  --surface-hover:#F3E6DA;
-  --border:rgba(120,86,78,0.14);
-  --border-strong:rgba(120,86,78,0.26);
-  --text:#4A3238;
-  --text-dim:#8B6F6A;
-  --text-faint:#B49A93;
+  --bg:#F1EEE9;
+  --bg-soft:#F7F4EE;
+  --surface:#FBFAF6;
+  --surface-hover:#ECE7DF;
+  --border:rgba(75,70,60,0.14);
+  --border-strong:rgba(75,70,60,0.26);
+  --text:#3B3630;
+  --text-dim:#877F76;
+  --text-faint:#A99F94;
 
-  --sand-deep:#B2967D;
-  --sand-soft:rgba(178,150,125,0.20);
+  --sand-deep:#A38B72;
+  --sand-soft:rgba(163,139,114,0.20);
 
-  --rose:#D4708A;
-  --rose-deep:#B84D6A;
-  --rose-soft:rgba(212,112,138,0.16);
+  /* Hauptfarbe = Salbei (früher Rosé) */
+  --rose:#8FA389;
+  --rose-deep:#63795E;
+  --rose-soft:rgba(143,163,137,0.18);
+
+  /* leiser Akzent = gedämpftes Rosé (z.B. Geburtstags-Knopf) */
+  --accent:#C58798;
+  --accent-deep:#9C5E70;
+  --accent-soft:rgba(197,135,152,0.18);
 
   --gold:#C9A15A;
   --gold-deep:#9C7A38;
@@ -85,8 +91,8 @@ html{scroll-behavior:smooth;}
 body{
   margin:0;
   background:
-    radial-gradient(ellipse at top left, rgba(201,123,136,0.10), transparent 45%),
-    radial-gradient(ellipse at bottom right, rgba(147,168,126,0.10), transparent 45%),
+    radial-gradient(ellipse at top left, rgba(197,135,152,0.08), transparent 45%),
+    radial-gradient(ellipse at bottom right, rgba(143,163,137,0.12), transparent 45%),
     var(--bg);
   color:var(--text);
   font-family:'Quicksand',system-ui,sans-serif;
@@ -206,7 +212,7 @@ body{
   display:flex;
   flex-direction:column;
   gap:16px;
-  box-shadow:0 1px 2px rgba(120,86,78,0.04);
+  box-shadow:0 1px 2px rgba(75,70,60,0.04);
 }
 .card-head{
   display:flex;
@@ -800,7 +806,7 @@ footer.foot{
   padding:10px 18px;border-radius:999px;font-size:13px;
   opacity:0;transition:opacity .25s ease, transform .25s ease;
   pointer-events:none;
-  box-shadow:0 4px 14px rgba(120,86,78,0.12);
+  box-shadow:0 4px 14px rgba(75,70,60,0.12);
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -833,7 +839,7 @@ footer.foot{
   gap:7px;
   white-space:nowrap;
   transition:background .15s ease, color .15s ease, box-shadow .15s ease;
-  box-shadow:0 1px 3px rgba(120,86,78,0.06);
+  box-shadow:0 1px 3px rgba(75,70,60,0.06);
 }
 .level-tab span{font-size:15px;}
 .level-tab:hover:not(.active){background:var(--surface-hover);}
@@ -884,11 +890,11 @@ footer.foot{
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius);padding:22px;
   display:flex;flex-direction:column;gap:6px;
-  box-shadow:0 1px 2px rgba(120,86,78,0.04);
+  box-shadow:0 1px 2px rgba(75,70,60,0.04);
   transition:transform .12s ease, box-shadow .15s ease, background .15s ease;
   font-family:'Quicksand',sans-serif;
 }
-.area-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(120,86,78,0.10);}
+.area-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(75,70,60,0.10);}
 .area-card .area-emoji{font-size:26px;line-height:1;}
 .area-card h3{
   font-family:'Quicksand',sans-serif;font-weight:600;font-size:18px;margin:8px 0 0;color:var(--text);letter-spacing:-0.01em;
@@ -930,11 +936,11 @@ footer.foot{
   background:var(--surface);
   border:1px solid var(--border);border-radius:16px;
   padding:16px 20px;margin-bottom:12px;cursor:pointer;
-  box-shadow:0 2px 8px rgba(120,86,78,0.05);
+  box-shadow:0 2px 8px rgba(75,70,60,0.05);
   transition:transform .14s ease, box-shadow .18s ease, border-color .18s ease;
 }
 .hub-list-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--sand-deep);opacity:.35;transition:opacity .18s ease, background .18s ease;}
-.hub-list-item:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(120,86,78,0.11);border-color:var(--border-strong);}
+.hub-list-item:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(75,70,60,0.11);border-color:var(--border-strong);}
 .hub-list-item:hover::before{opacity:.8;}
 .hub-list-item .hli-title{font-family:'Quicksand',sans-serif;font-weight:600;font-size:15.5px;color:var(--text);margin:0 0 3px;letter-spacing:-0.01em;}
 .hub-list-item .hli-body{color:var(--text-faint);font-size:12.5px;margin:2px 0 0;line-height:1.55;
@@ -967,8 +973,8 @@ footer.foot{
 .fab:active{transform:scale(0.96);}
 @media (max-width:640px){.fab{right:16px;bottom:16px;width:52px;height:52px;font-size:26px;}}
 /* Geburtstags-Knopf sitzt über dem +-Button */
-.fab-cake{bottom:94px;background:var(--gold-deep);font-size:26px;box-shadow:0 6px 20px rgba(156,122,56,0.34);}
-.fab-cake:hover{box-shadow:0 10px 26px rgba(156,122,56,0.44);}
+.fab-cake{bottom:94px;background:var(--accent-deep);font-size:26px;box-shadow:0 6px 20px rgba(156,94,112,0.34);}
+.fab-cake:hover{box-shadow:0 10px 26px rgba(156,94,112,0.44);}
 @media (max-width:640px){.fab-cake{bottom:78px;font-size:23px;}}
 
 /* ---- Modal ---- */
@@ -980,7 +986,7 @@ footer.foot{
 .modal{
   position:relative;background:var(--surface);border:1px solid var(--border-strong);
   border-radius:18px;max-width:520px;width:100%;padding:26px 26px 24px;
-  box-shadow:0 18px 50px rgba(120,86,78,0.24);margin:auto;
+  box-shadow:0 18px 50px rgba(75,70,60,0.24);margin:auto;
 }
 .modal-close{
   position:absolute;top:14px;right:14px;background:none;border:none;font-size:17px;
@@ -1092,7 +1098,7 @@ input[type=file]{font-family:'Quicksand',sans-serif;font-size:13px;color:var(--t
 
 /* Ziel-Karte mit verschachtelten Projekten */
 .goal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 2px rgba(120,86,78,0.04);cursor:pointer;transition:background .12s ease;}
+  padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 2px rgba(75,70,60,0.04);cursor:pointer;transition:background .12s ease;}
 .goal-card:hover{background:var(--bg-soft);}
 .goal-card .gc-title{font-family:'Quicksand',sans-serif;font-weight:600;font-size:17px;color:var(--text);margin:0 0 10px;letter-spacing:-0.01em;}
 .goal-card .gc-projects{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
@@ -1264,24 +1270,24 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 </script>
 </head>
 <body>
-<div id="loginOverlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle" style="display:none;position:fixed;inset:0;z-index:9999;background:#F7F0E6;align-items:center;justify-content:center;font-family:'Quicksand',system-ui,sans-serif;">
-  <div style="background:#FFFDF8;border:1px solid rgba(120,86,78,0.14);border-radius:16px;padding:32px;max-width:380px;width:90%;box-shadow:0 4px 20px rgba(120,86,78,0.12);">
-    <p style="margin:0 0 4px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B84D6A;">— Kompass —</p>
-    <h2 id="loginTitle" style="margin:0 0 20px;font-family:'Fraunces',serif;font-weight:500;font-size:26px;color:#4A3238;">Anmelden</h2>
+<div id="loginOverlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle" style="display:none;position:fixed;inset:0;z-index:9999;background:#F1EEE9;align-items:center;justify-content:center;font-family:'Quicksand',system-ui,sans-serif;">
+  <div style="background:#FFFDF8;border:1px solid rgba(75,70,60,0.14);border-radius:16px;padding:32px;max-width:380px;width:90%;box-shadow:0 4px 20px rgba(75,70,60,0.12);">
+    <p style="margin:0 0 4px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#63795E;">— Kompass —</p>
+    <h2 id="loginTitle" style="margin:0 0 20px;font-family:'Fraunces',serif;font-weight:500;font-size:26px;color:#3B3630;">Anmelden</h2>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
-      <label for="loginEmail" style="font-size:11px;color:#B49A93;">E-Mail</label>
+      <label for="loginEmail" style="font-size:11px;color:#A99F94;">E-Mail</label>
       <input type="email" id="loginEmail" autocomplete="email" placeholder="name@beispiel.de"
-        style="background:#FBF3EC;border:1px solid rgba(120,86,78,0.26);color:#4A3238;border-radius:8px;padding:9px 10px;font-family:'Quicksand',sans-serif;font-size:14px;">
+        style="background:#F7F4EE;border:1px solid rgba(75,70,60,0.26);color:#3B3630;border-radius:8px;padding:9px 10px;font-family:'Quicksand',sans-serif;font-size:14px;">
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:18px;">
-      <label for="loginPassword" style="font-size:11px;color:#B49A93;">Passwort</label>
+      <label for="loginPassword" style="font-size:11px;color:#A99F94;">Passwort</label>
       <input type="password" id="loginPassword" autocomplete="current-password" placeholder="•••••••"
-        style="background:#FBF3EC;border:1px solid rgba(120,86,78,0.26);color:#4A3238;border-radius:8px;padding:9px 10px;font-family:'Quicksand',sans-serif;font-size:14px;">
+        style="background:#F7F4EE;border:1px solid rgba(75,70,60,0.26);color:#3B3630;border-radius:8px;padding:9px 10px;font-family:'Quicksand',sans-serif;font-size:14px;">
     </div>
     <button id="loginBtn" type="button"
-      style="background:#B84D6A;color:#FFF9F2;border:none;border-radius:8px;padding:11px;font-family:'Quicksand',sans-serif;font-weight:600;font-size:14px;cursor:pointer;width:100%;">Anmelden</button>
+      style="background:#63795E;color:#FFF9F2;border:none;border-radius:8px;padding:11px;font-family:'Quicksand',sans-serif;font-weight:600;font-size:14px;cursor:pointer;width:100%;">Anmelden</button>
     <p id="loginError" role="alert" aria-live="assertive" style="margin:12px 0 0;color:#B5564F;font-size:12px;min-height:16px;"></p>
-    <p style="margin:20px 0 0;font-size:11px;color:#B49A93;text-align:center;line-height:1.5;">
+    <p style="margin:20px 0 0;font-size:11px;color:#A99F94;text-align:center;line-height:1.5;">
       Deine Daten werden über Firebase synchronisiert und sind über deinen Login geschützt.
     </p>
   </div>
@@ -1292,7 +1298,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   <header class="hero">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <p class="eyebrow" style="margin:0;">— Kompass —</p>
-      <button id="logoutBtn" type="button" style="background:none;border:1px solid rgba(120,86,78,0.26);border-radius:8px;padding:5px 12px;font-family:'Quicksand',sans-serif;font-size:11px;color:var(--text-faint);cursor:pointer;">abmelden</button>
+      <button id="logoutBtn" type="button" style="background:none;border:1px solid rgba(75,70,60,0.26);border-radius:8px;padding:5px 12px;font-family:'Quicksand',sans-serif;font-size:11px;color:var(--text-faint);cursor:pointer;">abmelden</button>
     </div>
     <h1 id="greeting">Guten Tag</h1>
     <p class="date" id="todayDate"></p>
@@ -1302,8 +1308,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   <div class="divider" role="presentation">
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
       <circle cx="8" cy="8" r="2.4" fill="#C9A15A"/>
-      <ellipse cx="8" cy="8" rx="3.6" ry="6" fill="none" stroke="#B84D6A" stroke-width="0.9" opacity="0.7"/>
-      <ellipse cx="8" cy="8" rx="6" ry="3.6" fill="none" stroke="#B84D6A" stroke-width="0.9" opacity="0.7"/>
+      <ellipse cx="8" cy="8" rx="3.6" ry="6" fill="none" stroke="#63795E" stroke-width="0.9" opacity="0.7"/>
+      <ellipse cx="8" cy="8" rx="6" ry="3.6" fill="none" stroke="#63795E" stroke-width="0.9" opacity="0.7"/>
     </svg>
   </div>
 
@@ -3524,9 +3530,9 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       const doc = "<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>"+escapeHtml(title)+"</title>"
         + "<style>"
         + "body{font-family:Arial,sans-serif;color:#2b2b2b;font-size:12pt;line-height:1.5;}"
-        + "h1{font-family:'Modern Love Caps',Arial,sans-serif;font-size:20pt;color:#4A3238;margin:0 0 4px;}"
-        + "h2{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#4A3238;margin:18px 0 6px;border-bottom:1px solid #e5ded4;padding-bottom:2px;}"
-        + "h3{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#4A3238;margin:14px 0 2px;}"
+        + "h1{font-family:'Modern Love Caps',Arial,sans-serif;font-size:20pt;color:#3B3630;margin:0 0 4px;}"
+        + "h2{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#3B3630;margin:18px 0 6px;border-bottom:1px solid #e5ded4;padding-bottom:2px;}"
+        + "h3{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#3B3630;margin:14px 0 2px;}"
         + "p{font-family:Arial,sans-serif;font-size:12pt;margin:4px 0;}"
         + ".meta{font-family:Arial,sans-serif;color:#777777;font-size:10pt;margin:2px 0;}"
         + ".tags{font-family:Arial,sans-serif;color:#9C7A38;font-size:10pt;}"
@@ -4884,7 +4890,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       // ---- Charts (mit Guard, falls Chart.js fehlt) ----
       const chartInstances={};
       function renderChart(id,cfg){ if(typeof Chart==='undefined') return; if(chartInstances[id]) chartInstances[id].destroy(); const ctx=document.getElementById(id); if(!ctx) return; chartInstances[id]=new Chart(ctx,cfg); }
-      const CC={ mood:'#B84D6A', energy:'#C9A15A', stress:'#9AA8C7', bar:'#7A9A56' };
+      const CC={ mood:'#63795E', energy:'#C9A15A', stress:'#9AA8C7', bar:'#7A9A56' };
 
       // ---- Shell + interne Tabs ----
       const JR_TABS=[ ['checkin','📝 Heute'],['dashboard','📅 Rückblick'],['insights','🧠 Erkenntnisse'],['stats','📊 Statistik'],['settings','⚙️'] ];
