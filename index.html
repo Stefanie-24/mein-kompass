@@ -966,6 +966,10 @@ footer.foot{
 .fab:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 10px 26px rgba(184,77,106,0.44);}
 .fab:active{transform:scale(0.96);}
 @media (max-width:640px){.fab{right:16px;bottom:16px;width:52px;height:52px;font-size:26px;}}
+/* Geburtstags-Knopf sitzt über dem +-Button */
+.fab-cake{bottom:94px;background:var(--gold-deep);font-size:26px;box-shadow:0 6px 20px rgba(156,122,56,0.34);}
+.fab-cake:hover{box-shadow:0 10px 26px rgba(156,122,56,0.44);}
+@media (max-width:640px){.fab-cake{bottom:78px;font-size:23px;}}
 
 /* ---- Modal ---- */
 .modal-overlay{
@@ -1704,26 +1708,6 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       <div class="notes-board" id="notesBoard"></div>
     </section>
 
-    <section class="card card-birthday">
-      <div class="card-head">
-        <span class="icon" style="font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;">🎂</span>
-        <h2>Geburtstage</h2>
-        <span class="card-sub" id="birthdaySub"></span>
-      </div>
-      <form class="quick-add" id="birthdayForm">
-        <div class="field" style="flex:1 1 180px;">
-          <label for="bdName">Name</label>
-          <input type="text" id="bdName" placeholder="z.B. Mama" required>
-        </div>
-        <div class="field">
-          <label for="bdDate">Geburtstag</label>
-          <input type="date" id="bdDate" required>
-        </div>
-        <button class="btn" type="submit">Hinzufügen</button>
-      </form>
-      <ul class="entry-list" id="birthdayList"></ul>
-    </section>
-
   </main>
 
   </div><!-- /#viewKompass -->
@@ -1742,6 +1726,30 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 
 <!-- ===== QUICK ADD (＋ Hinzufügen) ===== -->
 <button type="button" class="fab" id="quickAddFab" aria-label="Hinzufügen" title="Hinzufügen">＋</button>
+<!-- ===== Geburtstagskalender-Knopf (über dem +) ===== -->
+<button type="button" class="fab fab-cake" id="birthdayFab" aria-label="Geburtstage" title="Geburtstage">🎂</button>
+
+<!-- ===== Geburtstags-Fenster ===== -->
+<div class="modal-overlay" id="bdModalOverlay" style="display:none;">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bdModalTitle">
+    <button type="button" class="modal-close" id="bdModalClose" aria-label="Schließen">✕</button>
+    <h3 id="bdModalTitle">🎂 Geburtstage</h3>
+    <p class="modal-hint">Wer hat wann Geburtstag? Sortiert nach dem nächsten Termin.</p>
+    <form class="quick-add" id="birthdayForm" style="margin-bottom:14px;">
+      <div class="field" style="flex:1 1 160px;">
+        <label for="bdName">Name</label>
+        <input type="text" id="bdName" placeholder="z.B. Mama" required>
+      </div>
+      <div class="field">
+        <label for="bdDate">Geburtstag</label>
+        <input type="date" id="bdDate" required>
+      </div>
+      <button class="btn" type="submit">Hinzufügen</button>
+    </form>
+    <span class="card-sub" id="birthdaySub" style="display:block;margin-bottom:8px;"></span>
+    <ul class="entry-list" id="birthdayList"></ul>
+  </div>
+</div>
 
 <!-- ===== MODAL-OVERLAY (Quick Add + Formulare + Item-Detail) ===== -->
 <div class="modal-overlay" id="modalOverlay" style="display:none;">
@@ -3184,21 +3192,31 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       listEl.appendChild(li);
     });
   }
-  (function wireBirthdayForm(){
+  function openBirthdayModal(){ renderBirthdays(); const o=document.getElementById('bdModalOverlay'); if(o) o.style.display='flex'; }
+  function closeBirthdayModal(){ const o=document.getElementById('bdModalOverlay'); if(o) o.style.display='none'; }
+  (function wireBirthday(){
     const form = document.getElementById('birthdayForm');
-    if(!form) return;
-    form.addEventListener('submit', e=>{
-      e.preventDefault();
-      const name = document.getElementById('bdName').value.trim();
-      const date = document.getElementById('bdDate').value;
-      if(!name || !date) return;
-      state.birthdays = state.birthdays || [];
-      state.birthdays.push({ id: uid(), name, date });
-      save(KEYS.birthdays, state.birthdays);
-      form.reset();
-      renderBirthdays();
-      showToast('Geburtstag hinzugefügt');
-    });
+    if(form){
+      form.addEventListener('submit', e=>{
+        e.preventDefault();
+        const name = document.getElementById('bdName').value.trim();
+        const date = document.getElementById('bdDate').value;
+        if(!name || !date) return;
+        state.birthdays = state.birthdays || [];
+        state.birthdays.push({ id: uid(), name, date });
+        save(KEYS.birthdays, state.birthdays);
+        form.reset();
+        renderBirthdays();
+        showToast('Geburtstag hinzugefügt');
+      });
+    }
+    const fab = document.getElementById('birthdayFab');
+    if(fab) fab.addEventListener('click', openBirthdayModal);
+    const closeBtn = document.getElementById('bdModalClose');
+    if(closeBtn) closeBtn.addEventListener('click', closeBirthdayModal);
+    const overlay = document.getElementById('bdModalOverlay');
+    if(overlay) overlay.addEventListener('click', e=>{ if(e.target===overlay) closeBirthdayModal(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeBirthdayModal(); });
   })();
 
   // ================= OVERVIEW =================
