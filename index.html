@@ -451,6 +451,9 @@ body{
 .card-notes .icon{color:var(--sand-deep);}
 .card-notes h2{color:var(--rose-deep);}
 .card-notes .btn{background:var(--rose-deep);}
+.card-birthday{grid-column:1 / -1;}
+.card-birthday h2{color:var(--rose-deep);}
+.card-birthday .btn{background:var(--rose-deep);}
 
 .card-book .icon{color:var(--sand-deep);}
 .card-book h2{color:var(--rose-deep);}
@@ -1103,6 +1106,11 @@ input[type=file]{font-family:'Quicksand',sans-serif;font-size:13px;color:var(--t
 
 /* ---- Aufgaben-Bereich ---- */
 .area-aufgaben{grid-column:1 / -1;border-top:3px solid var(--rose-deep);}
+.area-arbeit{grid-column:1 / -1;border-top:3px solid var(--clay-deep);}
+.w-status{font-size:10.5px;font-family:'Inter Tight','Inter',sans-serif;font-weight:600;border-radius:999px;padding:3px 9px;}
+.w-status-offen{background:var(--clay-soft);color:var(--clay-deep);}
+.w-status-erledigt{background:var(--sage-soft);color:var(--sage-deep);}
+.w-status-abgerechnet{background:var(--sky-soft);color:var(--sky-deep);}
 .qa-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(max-width:440px){.qa-2col{grid-template-columns:1fr;}}
 
@@ -1696,6 +1704,26 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       <div class="notes-board" id="notesBoard"></div>
     </section>
 
+    <section class="card card-birthday">
+      <div class="card-head">
+        <span class="icon" style="font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;">🎂</span>
+        <h2>Geburtstage</h2>
+        <span class="card-sub" id="birthdaySub"></span>
+      </div>
+      <form class="quick-add" id="birthdayForm">
+        <div class="field" style="flex:1 1 180px;">
+          <label for="bdName">Name</label>
+          <input type="text" id="bdName" placeholder="z.B. Mama" required>
+        </div>
+        <div class="field">
+          <label for="bdDate">Geburtstag</label>
+          <input type="date" id="bdDate" required>
+        </div>
+        <button class="btn" type="submit">Hinzufügen</button>
+      </form>
+      <ul class="entry-list" id="birthdayList"></ul>
+    </section>
+
   </main>
 
   </div><!-- /#viewKompass -->
@@ -1837,7 +1865,9 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     hubInbox:'kompass_hub_inbox',
     hubSelf:'kompass_hub_self',
     hubTasks:'kompass_hub_tasks',
+    hubWork:'kompass_hub_work',
     hubKnowledgeImages:'kompass_hub_knowledge_images',
+    birthdays:'kompass_birthdays',
     // ---- Journal-interne Buckets (integriert aus bestehender Journal-App) ----
     journalHabits:'kompass_journal_habits',
     journalDailyGoals:'kompass_journal_dailygoals',
@@ -1920,6 +1950,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     reading: load(KEYS.reading, []),
     photo: load(KEYS.photo, null),
     photoRatio: load(KEYS.photoRatio, null),
+    birthdays: load(KEYS.birthdays, []),
     settings: load(KEYS.settings, {apiKey:'', sheetId:'', sheetRange:'', calendarId:'', sheetEmbed:'', calendarEmbed:''}),
     financeSheet: [],   // zuletzt geladene Zeilen aus dem Google Sheet (nicht dauerhaft gespeichert)
     financeSheetBalance: null, // optional: direkt aus Sheet-Zelle geholter Kontostand
@@ -3114,6 +3145,62 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     });
   }
 
+  // ================= GEBURTSTAGE =================
+  const BD_MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  function deleteBirthday(id){
+    state.birthdays = (state.birthdays||[]).filter(b=>b.id!==id);
+    save(KEYS.birthdays, state.birthdays);
+    renderBirthdays();
+  }
+  function renderBirthdays(){
+    const listEl = document.getElementById('birthdayList');
+    const sub = document.getElementById('birthdaySub');
+    if(!listEl) return;
+    const bs = state.birthdays || [];
+    if(sub) sub.textContent = bs.length + ' ' + (bs.length===1?'Geburtstag':'Geburtstage');
+    listEl.innerHTML = '';
+    if(bs.length === 0){ listEl.innerHTML = '<li class="empty-hint">Noch keine Geburtstage — trag oben den ersten ein.</li>'; return; }
+    const today = new Date(); today.setHours(0,0,0,0);
+    const withNext = bs.map(b=>{
+      const [y,m,d] = (b.date||'').split('-').map(Number);
+      if(!m || !d) return { ...b, days: 99999 };
+      let next = new Date(today.getFullYear(), m-1, d);
+      if(next < today) next = new Date(today.getFullYear()+1, m-1, d);
+      const days = Math.round((next - today) / 86400000);
+      const turning = y ? (next.getFullYear() - y) : null;
+      return { ...b, days, turning, m, d };
+    }).sort((a,b)=> a.days - b.days);
+    withNext.forEach(b=>{
+      const li = document.createElement('li');
+      li.className = 'task';
+      const dayLabel = b.days===0 ? '🎉 heute!' : (b.days===1 ? 'morgen' : 'in ' + b.days + ' Tagen');
+      const dateLabel = b.d ? (b.d + '. ' + BD_MONTHS[b.m-1]) : '';
+      li.innerHTML =
+        '<div class="meta"><span class="primary">'+escapeHtml(b.name)+(b.turning?' · wird '+b.turning:'')+'</span>'+
+        '<span class="secondary">'+dateLabel+'</span></div>'+
+        '<span class="countdown'+(b.days===0?' overdue':'')+'">'+dayLabel+'</span>'+
+        '<button class="del" title="Löschen" aria-label="Geburtstag löschen">×</button>';
+      li.querySelector('.del').addEventListener('click', ()=>deleteBirthday(b.id));
+      listEl.appendChild(li);
+    });
+  }
+  (function wireBirthdayForm(){
+    const form = document.getElementById('birthdayForm');
+    if(!form) return;
+    form.addEventListener('submit', e=>{
+      e.preventDefault();
+      const name = document.getElementById('bdName').value.trim();
+      const date = document.getElementById('bdDate').value;
+      if(!name || !date) return;
+      state.birthdays = state.birthdays || [];
+      state.birthdays.push({ id: uid(), name, date });
+      save(KEYS.birthdays, state.birthdays);
+      form.reset();
+      renderBirthdays();
+      showToast('Geburtstag hinzugefügt');
+    });
+  })();
+
   // ================= OVERVIEW =================
   function renderOverview(){
     const calcBalance = allFinance().reduce((sum,e)=> sum + (e.type==='income'? e.amount : -e.amount), 0);
@@ -3156,6 +3243,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     state.reading = load(KEYS.reading, []);
     state.photo = load(KEYS.photo, null);
     state.photoRatio = load(KEYS.photoRatio, null);
+    state.birthdays = load(KEYS.birthdays, []);
     state.settings = load(KEYS.settings, state.settings);
     // UI-Felder mit den frischen Settings befüllen
     if(document.getElementById('setApiKey')){
@@ -3182,6 +3270,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     renderGrades();
     renderReading();
     renderNotes();
+    renderBirthdays();
     renderOverview();
     Hub.init();
   }
@@ -4090,6 +4179,12 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
             <p class="area-desc">Was du über dich und deine Entwicklung gelernt hast.</p>
             <span class="area-count">${c.insight} ${c.insight===1?'Erkenntnis':'Erkenntnisse'}</span>
           </button>
+          <button type="button" class="area-card area-arbeit" data-area="arbeit">
+            <span class="area-emoji">🕒</span>
+            <h3>Arbeitszeiten</h3>
+            <p class="area-desc">Erfasse deine Arbeitsstunden — Zeit &amp; Verdienst automatisch berechnet.</p>
+            <span class="area-count" id="areaWorkCount"></span>
+          </button>
         </div>
 
         <section class="card" style="margin-bottom:16px;">
@@ -4116,12 +4211,15 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         const overdue = tall.filter(t=>t.status!=='erledigt' && t.dueDate && t.dueDate<today).length;
         tCountEl.textContent = open+' offen'+(overdue?' · '+overdue+' überfällig':'');
       }
+      const wCountEl = document.getElementById('areaWorkCount');
+      if(wCountEl){ const n=load(KEYS.hubWork, []).length; wCountEl.textContent = n+' '+(n===1?'Eintrag':'Einträge'); }
       // Bereichskarten
       root.querySelectorAll('[data-area]').forEach(b=> b.addEventListener('click', ()=>{
         if(b.dataset.area==='wissen'){ wissenFilter={cat:'',q:''}; renderWissen(); }
         else if(b.dataset.area==='ziele'){ renderZiele(); }
         else if(b.dataset.area==='journal'){ switchLevel('journal'); }
         else if(b.dataset.area==='aufgaben'){ Tasks.open(); }
+        else if(b.dataset.area==='arbeit'){ Work.open(); }
         else renderArea(b.dataset.area);
       }));
       // Zuletzt-Items
@@ -4186,6 +4284,159 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         });
       });
     }
+
+    /* ==========================================================
+       ARBEITSZEITEN — Stundenerfassung (wie klassische Zeit-App)
+       ========================================================== */
+    const Work = (function(){
+      const STATUS = { offen:'Offen', erledigt:'Erledigt', abgerechnet:'Abgerechnet' };
+      const eur = new Intl.NumberFormat('de-DE', {style:'currency', currency:'EUR'});
+      const pad = n => String(n).padStart(2,'0');
+      const list_ = () => load(KEYS.hubWork, []);
+      const persistW = arr => save(KEYS.hubWork, arr);
+
+      function addItem(data){
+        const arr = list_(); const now = new Date().toISOString();
+        const item = Object.assign({
+          id: uid(), type:'work', project:'', client:'', start:'', end:'', pauseMin:0,
+          wage:0, description:'', note:'', status:'offen', mark:'', createdAt:now, updatedAt:now
+        }, data||{});
+        arr.unshift(item); persistW(arr); return item;
+      }
+      function saveItem(id, patch){ const arr=list_(); const it=arr.find(x=>x.id===id); if(!it) return; Object.assign(it, patch, {updatedAt:new Date().toISOString()}); persistW(arr); }
+      function del(id){ persistW(list_().filter(x=>x.id!==id)); }
+
+      function minutes(w){ if(!w.start||!w.end) return 0; const m=(new Date(w.end)-new Date(w.start))/60000 - (Number(w.pauseMin)||0); return Math.max(0, Math.round(m)); }
+      function fmtHM(mins){ return pad(Math.floor(mins/60))+':'+pad(mins%60); }
+      function earnings(w){ return (minutes(w)/60)*(Number(w.wage)||0); }
+      function fmtDT(iso){ if(!iso) return '–'; const d=new Date(iso); if(isNaN(d)) return '–'; return d.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+      function fmtDate(iso){ if(!iso) return '–'; const d=new Date(iso); if(isNaN(d)) return '–'; return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+      function fmtTime(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); }
+
+      let active=false;
+      function open(){ active=true; render(); }
+      function refresh(){ if(active) render(); }
+
+      function statusPill(s){ return `<span class="w-status w-status-${s}">${STATUS[s]||s}</span>`; }
+
+      function itemRow(w){
+        const mins=minutes(w);
+        return `
+          <div class="hub-list-item" data-wopen="${w.id}">
+            <div class="row-between" style="align-items:flex-start;gap:12px;">
+              <div style="min-width:0;">
+                <p class="hli-title">${escapeHtml(w.project||'Arbeitszeit')}${w.client?` · ${escapeHtml(w.client)}`:''}</p>
+                <p class="hli-body" style="-webkit-line-clamp:1;">${fmtDate(w.start)} · ${fmtTime(w.start)}–${fmtTime(w.end)}${w.pauseMin?` · Pause ${w.pauseMin}′`:''}</p>
+              </div>
+              <div style="text-align:right;flex:none;">
+                <div style="font-family:'Inter Tight','Inter',sans-serif;font-weight:600;color:var(--text);">${fmtHM(mins)} h</div>
+                <div style="font-size:12px;color:var(--sage-deep);font-weight:600;">${eur.format(earnings(w))}</div>
+              </div>
+            </div>
+            <div class="hli-foot">${statusPill(w.status)}${w.mark?`<span class="tag">${escapeHtml(w.mark)}</span>`:''}</div>
+          </div>`;
+      }
+
+      function render(){
+        const root=document.getElementById('hubRoot');
+        const items=list_().slice().sort((a,b)=>(b.start||b.createdAt||'').localeCompare(a.start||a.createdAt||''));
+        const now=new Date(); const ym=now.getFullYear()+'-'+pad(now.getMonth()+1);
+        const monthItems=items.filter(w=>(w.start||'').slice(0,7)===ym);
+        const monthMin=monthItems.reduce((s,w)=>s+minutes(w),0);
+        const monthEarn=monthItems.reduce((s,w)=>s+earnings(w),0);
+        const openN=items.filter(w=>w.status==='offen').length;
+        root.innerHTML=`
+          <button type="button" class="hub-back" id="wBack">← Übersicht</button>
+          <div class="hub-intro"><h2>🕒 Arbeitszeiten</h2><p>Erfasse deine Arbeitsstunden — Arbeitszeit und Verdienst werden automatisch berechnet.</p></div>
+          <div style="margin:0 0 18px;"><button type="button" class="btn-small" id="wAdd">＋ Zeit hinzufügen</button></div>
+          <div class="t-tiles">
+            <div class="t-tile t-tile-week"><span class="t-tile-lbl">Diesen Monat</span><span class="t-tile-num">${fmtHM(monthMin)}</span><span class="t-tile-sub">Stunden</span></div>
+            <div class="t-tile t-tile-proj"><span class="t-tile-lbl">Verdienst (Monat)</span><span class="t-tile-num" style="font-size:20px;">${eur.format(monthEarn)}</span></div>
+            <div class="t-tile"><span class="t-tile-lbl">Offen</span><span class="t-tile-num">${openN}</span></div>
+            <div class="t-tile"><span class="t-tile-lbl">Einträge</span><span class="t-tile-num">${items.length}</span></div>
+          </div>
+          <div id="wList">${items.length?items.map(itemRow).join(''):'<div class="hub-empty">Noch keine Arbeitszeiten erfasst.<br>Leg über „＋ Zeit hinzufügen" deine erste an.</div>'}</div>
+        `;
+        document.getElementById('wBack').addEventListener('click', ()=>{ active=false; renderHome(); });
+        document.getElementById('wAdd').addEventListener('click', ()=>openForm());
+        root.querySelectorAll('[data-wopen]').forEach(el=> el.addEventListener('click', ()=>openDetail(el.dataset.wopen)));
+      }
+
+      function openDetail(id){
+        const w=list_().find(x=>x.id===id); if(!w) return;
+        const mins=minutes(w);
+        const rows=[
+          ['Projekt', w.project||'–'],['Kunde', w.client||'–'],
+          ['Arbeitsbeginn', fmtDT(w.start)],['Arbeitsende', fmtDT(w.end)],
+          ['Pause', (w.pauseMin?w.pauseMin+' Minuten':'–')],['Arbeitszeit', fmtHM(mins)+' h'],
+          ['Stundenlohn', (Number(w.wage)||0)+' €'],['Verdienst', eur.format(earnings(w))],
+          ['Beschreibung', w.description||'–'],['Hinweis', w.note||'–'],
+          ['Status', STATUS[w.status]||w.status],['Kennzeichnung', w.mark||'–']
+        ];
+        openModal(`
+          <h3 id="modalTitle">🕒 ${escapeHtml(w.project||'Arbeitszeit')}</h3>
+          <div style="margin:6px 0 4px;">${rows.map(r=>`<div class="jr-read-row"><span>${r[0]}</span><span class="jr-read-val" style="max-width:60%;">${escapeHtml(String(r[1]))}</span></div>`).join('')}</div>
+          <div class="modal-actions">
+            <button type="button" class="mini-pill danger" id="wDel">Löschen</button>
+            <button type="button" class="mini-pill" id="wEdit">Bearbeiten</button>
+          </div>`);
+        document.getElementById('wDel').addEventListener('click', ()=>{ if(!confirm('Eintrag wirklich löschen?')) return; del(id); closeModal(); showToast('Gelöscht'); refresh(); });
+        document.getElementById('wEdit').addEventListener('click', ()=>openForm(w));
+      }
+
+      function defaultDT(hour){ const d=new Date(); d.setHours(hour,0,0,0); const o=new Date(d.getTime()-d.getTimezoneOffset()*60000); return o.toISOString().slice(0,16); }
+
+      function openForm(item){
+        const edit=item||null;
+        const v=(x)=> x?escapeHtml(String(x)):'';
+        const sel=(cur,x)=> cur===x?' selected':'';
+        const startVal=edit?(edit.start||''):defaultDT(9);
+        const endVal=edit?(edit.end||''):defaultDT(17);
+        openModal(`
+          <h3 id="modalTitle">🕒 Zeit ${edit?'bearbeiten':'hinzufügen'}</h3>
+          <form id="wForm">
+            <div class="qa-2col">
+              <div class="qa-field"><label>Projekt</label><input type="text" id="wfProject" placeholder="z.B. Stundenlohn" value="${v(edit&&edit.project)}"></div>
+              <div class="qa-field"><label>Kunde</label><input type="text" id="wfClient" placeholder="z.B. Standard-Client" value="${v(edit&&edit.client)}"></div>
+            </div>
+            <div class="qa-2col">
+              <div class="qa-field"><label>Arbeitsbeginn</label><input type="datetime-local" id="wfStart" value="${startVal}"></div>
+              <div class="qa-field"><label>Arbeitsende</label><input type="datetime-local" id="wfEnd" value="${endVal}"></div>
+            </div>
+            <div class="qa-2col">
+              <div class="qa-field"><label>Pause (Minuten)</label><input type="number" id="wfPause" min="0" step="5" placeholder="0" value="${edit&&edit.pauseMin?edit.pauseMin:''}"></div>
+              <div class="qa-field"><label>Stundenlohn (€)</label><input type="number" id="wfWage" min="0" step="0.5" placeholder="z.B. 10" value="${edit&&edit.wage?edit.wage:''}"></div>
+            </div>
+            <div class="qa-field"><label>Arbeitszeit</label><input type="text" id="wfArbeitszeit" readonly style="background:var(--bg-soft);font-weight:600;"></div>
+            <div class="qa-field"><label>Beschreibung</label><textarea id="wfDesc" placeholder="Welche Aufgabe hast du gemacht?">${edit&&edit.description?escapeHtml(edit.description):''}</textarea></div>
+            <div class="qa-2col">
+              <div class="qa-field"><label>Hinweis</label><input type="text" id="wfNote" placeholder="optional" value="${v(edit&&edit.note)}"></div>
+              <div class="qa-field"><label>Kennzeichnung</label><input type="text" id="wfMark" placeholder="optional" value="${v(edit&&edit.mark)}"></div>
+            </div>
+            <div class="qa-field"><label>Status</label><select id="wfStatus"><option value="offen"${edit?sel(edit.status,'offen'):' selected'}>Offen</option><option value="erledigt"${edit?sel(edit.status,'erledigt'):''}>Erledigt</option><option value="abgerechnet"${edit?sel(edit.status,'abgerechnet'):''}>Abgerechnet</option></select></div>
+            <div class="modal-actions">
+              <button type="button" class="btn-small" id="wfCancel" style="background:var(--surface-hover);color:var(--text-dim);">Abbrechen</button>
+              <button type="submit" class="btn-small">Speichern</button>
+            </div>
+          </form>`);
+        const g=id=>document.getElementById(id);
+        const recompute=()=>{ const tmp={start:g('wfStart').value, end:g('wfEnd').value, pauseMin:g('wfPause').value}; g('wfArbeitszeit').value = fmtHM(minutes(tmp))+' h'; };
+        ['wfStart','wfEnd','wfPause'].forEach(idn=> g(idn).addEventListener('input', recompute));
+        recompute();
+        g('wfCancel').addEventListener('click', closeModal);
+        g('wForm').addEventListener('submit', e=>{
+          e.preventDefault();
+          const data={ project:g('wfProject').value.trim(), client:g('wfClient').value.trim(), start:g('wfStart').value, end:g('wfEnd').value,
+            pauseMin:Number(g('wfPause').value)||0, wage:Number(g('wfWage').value)||0, description:g('wfDesc').value.trim(),
+            note:g('wfNote').value.trim(), mark:g('wfMark').value.trim(), status:g('wfStatus').value };
+          if(!data.start || !data.end){ showToast('Bitte Beginn und Ende angeben'); return; }
+          if(edit) saveItem(edit.id, data); else addItem(data);
+          closeModal(); showToast(edit?'Zeit aktualisiert':'🕒 Zeit gespeichert'); refresh();
+        });
+      }
+
+      return { open };
+    })();
 
     /* ==========================================================
        AUFGABEN — zentrales Aufgaben-System
