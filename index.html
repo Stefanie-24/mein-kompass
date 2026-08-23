@@ -1484,7 +1484,13 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         <span class="card-sub" id="cycleSub"></span>
       </div>
       <div class="cycle-info" id="cycleInfo">Noch keine Daten — trage deinen letzten Periodenbeginn ein.</div>
-      <button class="btn" id="cycleStartBtn" type="button">Periode beginnt heute</button>
+      <div class="quick-add" style="align-items:flex-end;">
+        <div class="field" style="flex:1 1 160px;">
+          <label for="cycleStartDate">Periodenbeginn (Datum wählbar)</label>
+          <input type="date" id="cycleStartDate">
+        </div>
+        <button class="btn" id="cycleStartBtn" type="button">Eintragen</button>
+      </div>
       <form class="quick-add" id="cycleSymptomForm">
         <div class="field" style="flex:0 0 120px;">
           <label for="cycMood">Stimmung</label>
@@ -1752,6 +1758,10 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       </div>
       <button class="btn" type="submit">Hinzufügen</button>
     </form>
+    <div class="hub-search" style="margin-bottom:10px;">
+      <span class="ic">🔎</span>
+      <input type="text" id="bdSearch" placeholder="Nach Namen suchen …" autocomplete="off">
+    </div>
     <span class="card-sub" id="birthdaySub" style="display:block;margin-bottom:8px;"></span>
     <ul class="entry-list" id="birthdayList"></ul>
   </div>
@@ -2439,14 +2449,18 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 
   // ================= ZYKLUS =================
   document.getElementById('cycleStartBtn').addEventListener('click', ()=>{
-    const today = todayISO();
-    if(!state.cycle.periodStarts.includes(today)){
-      state.cycle.periodStarts.push(today);
+    const input = document.getElementById('cycleStartDate');
+    const chosen = (input && input.value) ? input.value : todayISO();
+    if(chosen > todayISO()){ showToast('Kein Datum in der Zukunft'); return; }
+    if(!state.cycle.periodStarts.includes(chosen)){
+      state.cycle.periodStarts.push(chosen);
       state.cycle.periodStarts.sort();
       save(KEYS.cycle, state.cycle);
       renderCycle();
       renderOverview();
       showToast('Periodenbeginn gespeichert');
+    } else {
+      showToast('Dieser Tag ist bereits eingetragen');
     }
   });
 
@@ -2494,6 +2508,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   }
 
   function renderCycle(){
+    const sd = document.getElementById('cycleStartDate');
+    if(sd){ sd.max = todayISO(); if(!sd.value) sd.value = todayISO(); }
     const stats = cycleStats();
     const info = document.getElementById('cycleInfo');
     const sub = document.getElementById('cycleSub');
@@ -3170,10 +3186,13 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     const listEl = document.getElementById('birthdayList');
     const sub = document.getElementById('birthdaySub');
     if(!listEl) return;
-    const bs = state.birthdays || [];
-    if(sub) sub.textContent = bs.length + ' ' + (bs.length===1?'Geburtstag':'Geburtstage');
+    const allBs = state.birthdays || [];
+    const q = (document.getElementById('bdSearch')?.value || '').trim().toLowerCase();
+    const bs = q ? allBs.filter(b=>(b.name||'').toLowerCase().includes(q)) : allBs;
+    if(sub) sub.textContent = q ? (bs.length + ' von ' + allBs.length) : (allBs.length + ' ' + (allBs.length===1?'Geburtstag':'Geburtstage'));
     listEl.innerHTML = '';
-    if(bs.length === 0){ listEl.innerHTML = '<li class="empty-hint">Noch keine Geburtstage — trag oben den ersten ein.</li>'; return; }
+    if(allBs.length === 0){ listEl.innerHTML = '<li class="empty-hint">Noch keine Geburtstage — trag oben den ersten ein.</li>'; return; }
+    if(bs.length === 0){ listEl.innerHTML = '<li class="empty-hint">Keine Treffer für „'+escapeHtml(q)+'".</li>'; return; }
     const today = new Date(); today.setHours(0,0,0,0);
     const withNext = bs.map(b=>{
       const [y,m,d] = (b.date||'').split('-').map(Number);
@@ -3222,6 +3241,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     if(closeBtn) closeBtn.addEventListener('click', closeBirthdayModal);
     const overlay = document.getElementById('bdModalOverlay');
     if(overlay) overlay.addEventListener('click', e=>{ if(e.target===overlay) closeBirthdayModal(); });
+    const bdSearch = document.getElementById('bdSearch');
+    if(bdSearch) bdSearch.addEventListener('input', ()=>renderBirthdays());
     document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeBirthdayModal(); });
   })();
 
