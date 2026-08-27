@@ -461,6 +461,24 @@ body{
 .card-birthday h2{color:var(--rose-deep);}
 .card-birthday .btn{background:var(--rose-deep);}
 
+/* Kompakte Uni-Startkarte oben unter dem Dashboard */
+.uni-launch{width:100%;display:flex;align-items:center;gap:14px;text-align:left;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 18px;margin:0 0 16px;box-shadow:0 1px 2px rgba(75,70,60,0.05);
+  transition:transform .12s ease, box-shadow .15s ease, background .12s ease;font-family:'Quicksand',sans-serif;
+  border-left:4px solid var(--rose-deep);}
+.uni-launch:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(75,70,60,0.10);background:var(--bg-soft);}
+.uni-launch-ic{font-size:24px;line-height:1;flex:none;}
+.uni-launch-text{display:flex;flex-direction:column;flex:1;min-width:0;}
+.uni-launch-title{font-family:'Fraunces',serif;font-weight:500;font-size:19px;color:var(--text);}
+.uni-launch-sub{font-size:12.5px;color:var(--text-dim);margin-top:1px;}
+.uni-launch-arrow{color:var(--rose-deep);font-size:18px;flex:none;}
+
+/* Breiteres Fenster für Uni-Inhalte + Karten darin ohne Doppel-Rahmen */
+.modal-wide{max-width:640px;}
+#uniModalBody .card, #uniInfoCard{box-shadow:none;border:1px solid var(--border);margin-bottom:14px;}
+#uniModalBody .card:last-child{margin-bottom:14px;}
+
 .card-book .icon{color:var(--sand-deep);}
 .card-book h2{color:var(--rose-deep);}
 .card-book .btn{background:var(--rose-deep);}
@@ -1383,6 +1401,15 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     <div class="stat-tile"><span class="stat-label">Heute getrackt</span><span class="stat-value" id="statHealthToday">–</span></div>
   </section>
 
+  <button type="button" class="uni-launch" id="uniLaunch">
+    <span class="uni-launch-ic">🎓</span>
+    <span class="uni-launch-text">
+      <span class="uni-launch-title">Uni</span>
+      <span class="uni-launch-sub" id="uniLaunchSub">Stundenplan · Noten · Infos</span>
+    </span>
+    <span class="uni-launch-arrow">→</span>
+  </button>
+
   <main class="grid">
 
     <!-- FOTO -->
@@ -1540,7 +1567,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     </section>
 
     <!-- UNI -->
-    <section class="card card-uni">
+    <section class="card card-uni" id="uniCard">
       <div class="card-head">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8l10-5 10 5-10 5-10-5Z" stroke-linejoin="round"/><path d="M6 10.5v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5" stroke-linecap="round"/><path d="M21 8v6" stroke-linecap="round"/></svg>
         <h2>Uni</h2>
@@ -1654,7 +1681,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     </section>
 
     <!-- NOTEN -->
-    <section class="card card-grades">
+    <section class="card card-grades" id="gradesCard">
       <div class="card-head">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 6 6.5 1-4.5 5 1 6.5L12 17l-6 3.5 1-6.5L2.5 9 9 8l3-6Z" stroke-linejoin="round"/></svg>
         <h2>Noten</h2>
@@ -1764,6 +1791,31 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     </div>
     <span class="card-sub" id="birthdaySub" style="display:block;margin-bottom:8px;"></span>
     <ul class="entry-list" id="birthdayList"></ul>
+  </div>
+</div>
+
+<!-- ===== Uni-Fenster (Stundenplan · Aufgaben · Noten · Infos) ===== -->
+<div class="modal-overlay" id="uniModalOverlay" style="display:none;">
+  <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="uniModalTitle">
+    <button type="button" class="modal-close" id="uniModalClose" aria-label="Schließen">✕</button>
+    <h3 id="uniModalTitle">🎓 Uni</h3>
+    <p class="modal-hint">Dein Stundenplan, Aufgaben &amp; Prüfungen, Noten und wichtige Infos an einem Ort.</p>
+    <div id="uniModalBody"></div>
+    <section class="card card-uni-info" id="uniInfoCard">
+      <div class="card-head">
+        <span class="icon" style="font-size:19px;">📌</span>
+        <h2>Wichtige Infos</h2>
+        <span class="card-sub" id="uniInfoSub"></span>
+      </div>
+      <form class="quick-add" id="uniInfoForm">
+        <div class="field" style="flex:1 1 260px;">
+          <label for="uniInfoText">Notiz</label>
+          <input type="text" id="uniInfoText" placeholder="z.B. Prüfungsanmeldung bis 30.09., Raum B12 …" required>
+        </div>
+        <button class="btn" type="submit">Merken</button>
+      </form>
+      <ul class="entry-list" id="uniInfoList"></ul>
+    </section>
   </div>
 </div>
 
@@ -1879,6 +1931,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     reading:'kompass_reading',
     photo:'kompass_photo',
     photoRatio:'kompass_photo_ratio',
+    uniNotes:'kompass_uni_notes',
     // ---- Knowledge Hub ----
     hubKnowledge:'kompass_hub_knowledge',
     hubGoals:'kompass_hub_goals',
@@ -1975,6 +2028,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     photo: load(KEYS.photo, null),
     photoRatio: load(KEYS.photoRatio, null),
     birthdays: load(KEYS.birthdays, []),
+    uniNotes: load(KEYS.uniNotes, []),
     settings: load(KEYS.settings, {apiKey:'', sheetId:'', sheetRange:'', calendarId:'', sheetEmbed:'', calendarEmbed:''}),
     financeSheet: [],   // zuletzt geladene Zeilen aus dem Google Sheet (nicht dauerhaft gespeichert)
     financeSheetBalance: null, // optional: direkt aus Sheet-Zelle geholter Kontostand
@@ -3246,6 +3300,63 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeBirthdayModal(); });
   })();
 
+  // ================= UNI-FENSTER =================
+  function deleteUniNote(id){
+    state.uniNotes = (state.uniNotes||[]).filter(n=>n.id!==id);
+    save(KEYS.uniNotes, state.uniNotes);
+    renderUniInfo();
+  }
+  function renderUniInfo(){
+    const listEl = document.getElementById('uniInfoList');
+    const sub = document.getElementById('uniInfoSub');
+    if(!listEl) return;
+    const notes = (state.uniNotes||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    if(sub) sub.textContent = notes.length ? (notes.length+' Notiz(en)') : '';
+    listEl.innerHTML = '';
+    if(notes.length===0){ listEl.innerHTML = '<li class="empty-hint">Noch keine Infos — trag oben etwas Wichtiges ein.</li>'; return; }
+    notes.forEach(n=>{
+      const li = document.createElement('li'); li.className='task';
+      li.innerHTML = '<div class="meta"><span class="primary">'+escapeHtml(n.text)+'</span>'+
+        (n.date?'<span class="secondary">'+dateFmt(n.date)+'</span>':'')+'</div>'+
+        '<button class="del" title="Löschen" aria-label="Notiz löschen">×</button>';
+      li.querySelector('.del').addEventListener('click', ()=>deleteUniNote(n.id));
+      listEl.appendChild(li);
+    });
+  }
+  function updateUniLaunchSub(){
+    const el = document.getElementById('uniLaunchSub'); if(!el) return;
+    const c = (state.courses||[]).length, t = (state.tasks||[]).filter(x=>x.status!=='done').length, g = (state.grades||[]).length;
+    el.textContent = c+' Kurse · '+t+' offen · '+g+' Noten';
+  }
+  function openUniModal(){ const o=document.getElementById('uniModalOverlay'); if(o) o.style.display='flex'; updateUniLaunchSub(); }
+  function closeUniModal(){ const o=document.getElementById('uniModalOverlay'); if(o) o.style.display='none'; }
+  (function wireUni(){
+    const body = document.getElementById('uniModalBody');
+    const uniCard = document.getElementById('uniCard');
+    const gradesCard = document.getElementById('gradesCard');
+    if(body && uniCard) body.appendChild(uniCard);
+    if(body && gradesCard) body.appendChild(gradesCard);
+    const launch = document.getElementById('uniLaunch');
+    if(launch) launch.addEventListener('click', openUniModal);
+    const closeBtn = document.getElementById('uniModalClose');
+    if(closeBtn) closeBtn.addEventListener('click', closeUniModal);
+    const overlay = document.getElementById('uniModalOverlay');
+    if(overlay) overlay.addEventListener('click', e=>{ if(e.target===overlay) closeUniModal(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeUniModal(); });
+    const form = document.getElementById('uniInfoForm');
+    if(form) form.addEventListener('submit', e=>{
+      e.preventDefault();
+      const t = document.getElementById('uniInfoText').value.trim();
+      if(!t) return;
+      state.uniNotes = state.uniNotes || [];
+      state.uniNotes.push({ id: uid(), text: t, date: todayISO(), createdAt: new Date().toISOString() });
+      save(KEYS.uniNotes, state.uniNotes);
+      form.reset();
+      renderUniInfo();
+      showToast('Notiz gemerkt');
+    });
+  })();
+
   // ================= OVERVIEW =================
   function renderOverview(){
     const calcBalance = allFinance().reduce((sum,e)=> sum + (e.type==='income'? e.amount : -e.amount), 0);
@@ -3254,7 +3365,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 
     const next = upcomingEvents()[0];
     document.getElementById('statNextEvent').textContent = next
-      ? dateFmtShort(next.date) + ' · ' + next.title
+      ? dateFmtShort(next.date) + '  ' + next.title
       : '– keine –';
 
     const stats = cycleStats();
@@ -3289,6 +3400,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     state.photo = load(KEYS.photo, null);
     state.photoRatio = load(KEYS.photoRatio, null);
     state.birthdays = load(KEYS.birthdays, []);
+    state.uniNotes = load(KEYS.uniNotes, []);
     state.settings = load(KEYS.settings, state.settings);
     // UI-Felder mit den frischen Settings befüllen
     if(document.getElementById('setApiKey')){
@@ -3316,6 +3428,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     renderReading();
     renderNotes();
     renderBirthdays();
+    renderUniInfo();
+    updateUniLaunchSub();
     renderOverview();
     Hub.init();
   }
