@@ -922,6 +922,9 @@ footer.foot{
   margin-top:6px;font-family:'Inter Tight','Inter',sans-serif;font-size:12px;
   color:var(--rose-deep);font-weight:600;letter-spacing:.02em;
 }
+.area-lernen{position:relative;border-top:3px solid var(--clay);}
+.lern-edit{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-dim);font-size:12px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}
+.lern-edit:hover{background:var(--surface-hover);color:var(--text);}
 .area-wissen{border-top:3px solid var(--sky);}
 .area-ziele{border-top:3px solid var(--gold);}
 .area-ideen{border-top:3px solid var(--sage);}
@@ -1895,6 +1898,10 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
             return;
           }
           initApp();
+          if(cloudSyncError) showSyncBanner();
+          // Auto-Sync beim Zurückkehren auf den Tab (Handy ↔ Laptop)
+          document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) cloudRefreshOnReturn(); });
+          window.addEventListener('focus', cloudRefreshOnReturn);
         } else {
           sessionStorage.removeItem('kompass_cloud_loaded');
           showLogin();
@@ -1944,6 +1951,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     hubTasks:'kompass_hub_tasks',
     hubWork:'kompass_hub_work',
     hubKnowledgeImages:'kompass_hub_knowledge_images',
+    hubLearnUrl:'kompass_hub_learn_url',
     birthdays:'kompass_birthdays',
     // ---- Journal-interne Buckets (integriert aus bestehender Journal-App) ----
     journalHabits:'kompass_journal_habits',
@@ -1980,23 +1988,58 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     }
   }
 
+  let cloudSyncError = null;
   async function pullFromFirestore(){
-    if(!useFirebase() || !fb() || !fb().currentUser) return;
+    if(!useFirebase() || !fb() || !fb().currentUser) return false;
     const uid = fb().currentUser.uid;
+    let changed = false;
     for(const key of Object.values(KEYS)){
       try{
         const ref = fb().doc(fb().db, 'users', uid, 'kompass', key);
         const snap = await fb().getDoc(ref);
         if(snap.exists()){
           const data = snap.data();
-          if(data && data.value){
+          if(data && data.value && localStorage.getItem(key) !== data.value){
             localStorage.setItem(key, data.value);
+            changed = true;
           }
         }
       }catch(err){
+        if(err && err.code === 'permission-denied') cloudSyncError = 'permission-denied';
         console.warn('Konnte '+key+' nicht aus Cloud laden', err);
       }
     }
+    return changed;
+  }
+
+  // Zeigt einen deutlichen Hinweis, wenn die Cloud-Synchronisation blockiert ist.
+  function showSyncBanner(){
+    if(document.getElementById('syncBanner')) return;
+    const b = document.createElement('div');
+    b.id = 'syncBanner';
+    b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:70;background:var(--wine-deep,#7A4A55);color:#fff;padding:11px 16px;border-radius:12px;font-family:Quicksand,system-ui,sans-serif;font-size:12.5px;max-width:92%;box-shadow:0 6px 20px rgba(0,0,0,0.22);cursor:pointer;line-height:1.4;';
+    b.textContent = '⚠ Cloud-Sync inaktiv — deine Geräte teilen gerade keine Daten. Bitte die Firestore-Regeln in der Firebase-Konsole prüfen. (Tippen zum Ausblenden)';
+    b.addEventListener('click', ()=>b.remove());
+    document.body.appendChild(b);
+  }
+
+  // Beim Zurückkehren auf den Tab / Fokus erneut aus der Cloud laden und –
+  // falls sich etwas geändert hat – neu laden, damit Handy↔Laptop synchron sind.
+  let cloudRefreshBusy = false;
+  async function cloudRefreshOnReturn(){
+    if(cloudRefreshBusy) return;
+    if(!useFirebase() || !fb() || !fb().currentUser) return;
+    const ae = document.activeElement;
+    if(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return; // nicht beim Tippen stören
+    const openOverlay = ['modalOverlay','bdModalOverlay','uniModalOverlay']
+      .some(id=>{ const o=document.getElementById(id); return o && o.style.display==='flex'; });
+    if(openOverlay) return; // nicht stören, wenn ein Fenster offen ist
+    cloudRefreshBusy = true;
+    try{
+      const changed = await pullFromFirestore();
+      if(changed) location.reload();
+    }catch(_){ }
+    finally{ cloudRefreshBusy = false; }
   }
 
 
@@ -4278,6 +4321,33 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       }).slice(0,30);
     }
 
+    // ---- Lernen: konfigurierbarer Link zum eigenen Lernsystem ----
+    function getLearnUrl(){ return load(KEYS.hubLearnUrl, '') || ''; }
+    function setLearnUrl(u){ save(KEYS.hubLearnUrl, u||''); }
+    function normalizeUrl(u){ u=(u||'').trim(); if(!u) return ''; if(!/^https?:\/\//i.test(u)) u='https://'+u; return u; }
+    function learnLabel(){ try{ return new URL(getLearnUrl()).hostname.replace(/^www\./,''); }catch(_){ return getLearnUrl(); } }
+    function openLearn(){ const u=getLearnUrl(); if(u){ window.open(u,'_blank','noopener'); } else { learnSetup(); } }
+    function learnSetup(){
+      const cur = getLearnUrl();
+      openModal(`
+        <h3 id="modalTitle">📖 Lernsystem verknüpfen</h3>
+        <p class="modal-hint">Trag die Web-Adresse deines Lernsystems ein. Ein Klick auf die Karte öffnet sie dann direkt in einem neuen Tab.</p>
+        <div class="qa-field"><label>Adresse (URL)</label><input type="text" id="learnUrlInput" placeholder="z.B. https://mein-lernsystem.de" value="${cur?escapeHtml(cur):''}"></div>
+        <div class="modal-actions">
+          ${cur?'<button type="button" class="mini-pill danger" id="learnClear">Entfernen</button>':''}
+          <button type="button" class="btn-small" id="learnCancel" style="background:var(--surface-hover);color:var(--text-dim);">Abbrechen</button>
+          <button type="button" class="btn-small" id="learnSave">Speichern</button>
+        </div>`);
+      document.getElementById('learnUrlInput').focus();
+      document.getElementById('learnCancel').addEventListener('click', closeModal);
+      document.getElementById('learnSave').addEventListener('click', ()=>{
+        const u = normalizeUrl(document.getElementById('learnUrlInput').value);
+        setLearnUrl(u); closeModal(); showToast(u?'Lernsystem verknüpft':'Gespeichert'); renderHome();
+      });
+      const clr = document.getElementById('learnClear');
+      if(clr) clr.addEventListener('click', ()=>{ setLearnUrl(''); closeModal(); showToast('Entfernt'); renderHome(); });
+    }
+
     // Öffnet die passende Detailansicht je Typ (Aufgaben haben ihre eigene).
     function openAnyDetail(type, id, cb){
       if(type==='task') Tasks.openDetail(id);
@@ -4338,6 +4408,13 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
             <p class="area-desc">Was du über dich und deine Entwicklung gelernt hast.</p>
             <span class="area-count">${c.insight} ${c.insight===1?'Erkenntnis':'Erkenntnisse'}</span>
           </button>
+          <div class="area-card area-lernen" data-area="lernen" role="button" tabindex="0">
+            <button type="button" class="lern-edit" id="lernEdit" title="Adresse ändern" aria-label="Lern-Adresse ändern">✎</button>
+            <span class="area-emoji">📖</span>
+            <h3>Lernen</h3>
+            <p class="area-desc">Direkt zu deinem Lernsystem.</p>
+            <span class="area-count" id="areaLernSub">${getLearnUrl()?escapeHtml(learnLabel()):'Adresse eintragen →'}</span>
+          </div>
           <button type="button" class="area-card area-arbeit" data-area="arbeit">
             <span class="area-emoji">🕒</span>
             <h3>Arbeitszeiten</h3>
@@ -4379,8 +4456,11 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         else if(b.dataset.area==='journal'){ switchLevel('journal'); }
         else if(b.dataset.area==='aufgaben'){ Tasks.open(); }
         else if(b.dataset.area==='arbeit'){ Work.open(); }
+        else if(b.dataset.area==='lernen'){ openLearn(); }
         else renderArea(b.dataset.area);
       }));
+      const lernEdit = document.getElementById('lernEdit');
+      if(lernEdit) lernEdit.addEventListener('click', (e)=>{ e.stopPropagation(); learnSetup(); });
       // Zuletzt-Items
       root.querySelectorAll('.hub-list-item[data-open]').forEach(el=>{
         el.addEventListener('click', ()=>openAnyDetail(el.dataset.type, el.dataset.open));
