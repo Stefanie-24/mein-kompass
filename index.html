@@ -922,7 +922,7 @@ footer.foot{
   margin-top:6px;font-family:'Inter Tight','Inter',sans-serif;font-size:12px;
   color:var(--rose-deep);font-weight:600;letter-spacing:.02em;
 }
-.area-lernen{position:relative;border-top:3px solid var(--clay);}
+.area-linkcard{position:relative;}
 .lern-edit{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-dim);font-size:12px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}
 .lern-edit:hover{background:var(--surface-hover);color:var(--text);}
 .area-wissen{border-top:3px solid var(--sky);}
@@ -1952,6 +1952,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     hubWork:'kompass_hub_work',
     hubKnowledgeImages:'kompass_hub_knowledge_images',
     hubLearnUrl:'kompass_hub_learn_url',
+    hubFoodUrl:'kompass_hub_food_url',
+    hubWriteUrl:'kompass_hub_write_url',
     birthdays:'kompass_birthdays',
     // ---- Journal-interne Buckets (integriert aus bestehender Journal-App) ----
     journalHabits:'kompass_journal_habits',
@@ -4321,31 +4323,46 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       }).slice(0,30);
     }
 
-    // ---- Lernen: konfigurierbarer Link zum eigenen Lernsystem ----
-    function getLearnUrl(){ return load(KEYS.hubLearnUrl, '') || ''; }
-    function setLearnUrl(u){ save(KEYS.hubLearnUrl, u||''); }
+    // ---- Konfigurierbare Link-Karten (Lernen / Food / Schreiben) ----
+    const LINK_CARDS = {
+      lernen:    { emoji:'📖', title:'Lernen',    desc:'Direkt zu deinem Lernsystem.',   key:'hubLearnUrl', border:'var(--clay)' },
+      food:      { emoji:'🍽️', title:'Food',      desc:'Direkt zu deinem Food-System.',  key:'hubFoodUrl',  border:'var(--sage)' },
+      schreiben: { emoji:'✍️', title:'Schreiben', desc:'Direkt zu deinem Schreib-System.',key:'hubWriteUrl', border:'var(--plum)' }
+    };
     function normalizeUrl(u){ u=(u||'').trim(); if(!u) return ''; if(!/^https?:\/\//i.test(u)) u='https://'+u; return u; }
-    function learnLabel(){ try{ return new URL(getLearnUrl()).hostname.replace(/^www\./,''); }catch(_){ return getLearnUrl(); } }
-    function openLearn(){ const u=getLearnUrl(); if(u){ window.open(u,'_blank','noopener'); } else { learnSetup(); } }
-    function learnSetup(){
-      const cur = getLearnUrl();
+    function linkUrl(area){ return load(KEYS[LINK_CARDS[area].key], '') || ''; }
+    function setLinkUrl(area, u){ save(KEYS[LINK_CARDS[area].key], u||''); }
+    function linkLabel(area){ try{ return new URL(linkUrl(area)).hostname.replace(/^www\./,''); }catch(_){ return linkUrl(area); } }
+    function openLink(area){ const u=linkUrl(area); if(u){ window.open(u,'_blank','noopener'); } else { linkSetup(area); } }
+    function linkSetup(area){
+      const cfg = LINK_CARDS[area]; const cur = linkUrl(area);
       openModal(`
-        <h3 id="modalTitle">📖 Lernsystem verknüpfen</h3>
-        <p class="modal-hint">Trag die Web-Adresse deines Lernsystems ein. Ein Klick auf die Karte öffnet sie dann direkt in einem neuen Tab.</p>
-        <div class="qa-field"><label>Adresse (URL)</label><input type="text" id="learnUrlInput" placeholder="z.B. https://mein-lernsystem.de" value="${cur?escapeHtml(cur):''}"></div>
+        <h3 id="modalTitle">${cfg.emoji} ${escapeHtml(cfg.title)} verknüpfen</h3>
+        <p class="modal-hint">Trag die Web-Adresse ein. Ein Klick auf die Karte öffnet sie dann direkt in einem neuen Tab.</p>
+        <div class="qa-field"><label>Adresse (URL)</label><input type="text" id="linkUrlInput" placeholder="z.B. https://…" value="${cur?escapeHtml(cur):''}"></div>
         <div class="modal-actions">
-          ${cur?'<button type="button" class="mini-pill danger" id="learnClear">Entfernen</button>':''}
-          <button type="button" class="btn-small" id="learnCancel" style="background:var(--surface-hover);color:var(--text-dim);">Abbrechen</button>
-          <button type="button" class="btn-small" id="learnSave">Speichern</button>
+          ${cur?'<button type="button" class="mini-pill danger" id="linkClear">Entfernen</button>':''}
+          <button type="button" class="btn-small" id="linkCancel" style="background:var(--surface-hover);color:var(--text-dim);">Abbrechen</button>
+          <button type="button" class="btn-small" id="linkSave">Speichern</button>
         </div>`);
-      document.getElementById('learnUrlInput').focus();
-      document.getElementById('learnCancel').addEventListener('click', closeModal);
-      document.getElementById('learnSave').addEventListener('click', ()=>{
-        const u = normalizeUrl(document.getElementById('learnUrlInput').value);
-        setLearnUrl(u); closeModal(); showToast(u?'Lernsystem verknüpft':'Gespeichert'); renderHome();
+      document.getElementById('linkUrlInput').focus();
+      document.getElementById('linkCancel').addEventListener('click', closeModal);
+      document.getElementById('linkSave').addEventListener('click', ()=>{
+        const u = normalizeUrl(document.getElementById('linkUrlInput').value);
+        setLinkUrl(area, u); closeModal(); showToast(u?(cfg.title+' verknüpft'):'Gespeichert'); renderHome();
       });
-      const clr = document.getElementById('learnClear');
-      if(clr) clr.addEventListener('click', ()=>{ setLearnUrl(''); closeModal(); showToast('Entfernt'); renderHome(); });
+      const clr = document.getElementById('linkClear');
+      if(clr) clr.addEventListener('click', ()=>{ setLinkUrl(area,''); closeModal(); showToast('Entfernt'); renderHome(); });
+    }
+    function linkCardHtml(area){
+      const cfg = LINK_CARDS[area]; const has = !!linkUrl(area);
+      return `<div class="area-card area-linkcard" data-area="${area}" role="button" tabindex="0" style="border-top:3px solid ${cfg.border};">
+        <button type="button" class="lern-edit" data-linkedit="${area}" title="Adresse ändern" aria-label="${escapeHtml(cfg.title)}-Adresse ändern">✎</button>
+        <span class="area-emoji">${cfg.emoji}</span>
+        <h3>${escapeHtml(cfg.title)}</h3>
+        <p class="area-desc">${escapeHtml(cfg.desc)}</p>
+        <span class="area-count">${has?escapeHtml(linkLabel(area)):'Adresse eintragen →'}</span>
+      </div>`;
     }
 
     // Öffnet die passende Detailansicht je Typ (Aufgaben haben ihre eigene).
@@ -4408,13 +4425,9 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
             <p class="area-desc">Was du über dich und deine Entwicklung gelernt hast.</p>
             <span class="area-count">${c.insight} ${c.insight===1?'Erkenntnis':'Erkenntnisse'}</span>
           </button>
-          <div class="area-card area-lernen" data-area="lernen" role="button" tabindex="0">
-            <button type="button" class="lern-edit" id="lernEdit" title="Adresse ändern" aria-label="Lern-Adresse ändern">✎</button>
-            <span class="area-emoji">📖</span>
-            <h3>Lernen</h3>
-            <p class="area-desc">Direkt zu deinem Lernsystem.</p>
-            <span class="area-count" id="areaLernSub">${getLearnUrl()?escapeHtml(learnLabel()):'Adresse eintragen →'}</span>
-          </div>
+          ${linkCardHtml('lernen')}
+          ${linkCardHtml('food')}
+          ${linkCardHtml('schreiben')}
           <button type="button" class="area-card area-arbeit" data-area="arbeit">
             <span class="area-emoji">🕒</span>
             <h3>Arbeitszeiten</h3>
@@ -4456,11 +4469,10 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         else if(b.dataset.area==='journal'){ switchLevel('journal'); }
         else if(b.dataset.area==='aufgaben'){ Tasks.open(); }
         else if(b.dataset.area==='arbeit'){ Work.open(); }
-        else if(b.dataset.area==='lernen'){ openLearn(); }
+        else if(LINK_CARDS[b.dataset.area]){ openLink(b.dataset.area); }
         else renderArea(b.dataset.area);
       }));
-      const lernEdit = document.getElementById('lernEdit');
-      if(lernEdit) lernEdit.addEventListener('click', (e)=>{ e.stopPropagation(); learnSetup(); });
+      root.querySelectorAll('[data-linkedit]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); linkSetup(btn.dataset.linkedit); }));
       // Zuletzt-Items
       root.querySelectorAll('.hub-list-item[data-open]').forEach(el=>{
         el.addEventListener('click', ()=>openAnyDetail(el.dataset.type, el.dataset.open));
