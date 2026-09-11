@@ -906,6 +906,19 @@ footer.foot{
 .tc-rl{font-size:11px;color:var(--text-dim);}
 .tc-hint{font-size:11.5px;color:var(--text-faint);margin:14px 0 0;line-height:1.5;}
 
+/* ---- Kachel-Leiste + eingeklappte Detail-Karten ---- */
+.card-launch{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:0 0 8px;}
+@media(max-width:820px){.card-launch{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:480px){.card-launch{grid-template-columns:repeat(2,1fr);}}
+.clt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border:1px solid var(--border);background:var(--surface);border-radius:16px;cursor:pointer;font-family:'Quicksand',sans-serif;color:var(--text);transition:background .12s ease, transform .12s ease, border-color .12s ease;}
+.clt:hover{background:var(--surface-hover);transform:translateY(-1px);}
+.clt.on{background:var(--rose-soft);border-color:var(--rose-deep);}
+.clt-em{font-size:22px;line-height:1;}
+.clt-lb{font-size:12px;font-weight:600;}
+.grid.grid-collapsed{margin-top:14px;}
+.grid.grid-collapsed > .card{display:none;}
+.grid.grid-collapsed > .card.is-open{display:flex;grid-column:1 / -1;}
+
 /* ---- Hub-Startseite ---- */
 .hub-intro{padding:6px 8px 22px;}
 .hub-intro h2{
@@ -1456,7 +1469,9 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     <span class="uni-launch-arrow">→</span>
   </button>
 
-  <main class="grid">
+  <div class="card-launch" id="cardLaunch"></div>
+
+  <main class="grid grid-collapsed" id="kompassGrid">
 
     <!-- FOTO -->
     <section class="card card-photo">
@@ -2436,6 +2451,31 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     return html;
   }
   function renderWeekStrip(){ const el = document.getElementById('weekStrip'); if(el) el.innerHTML = weekStripHtml(); }
+
+  // Kachel-Leiste: räumt den Kompass auf. Jede Kachel öffnet genau ihre Detail-Karte.
+  const CARD_TILES = [
+    ['card-finance','💰','Finanzen'],['card-calendar','🗓️','Kalender'],['card-cycle','🌙','Zyklus'],
+    ['card-health','🩺','Gesundheit'],['card-habits','🔁','Gewohnheiten'],['card-photo','🖼️','Foto'],
+    ['card-book','✍️','Buch'],['card-reading','📚','Bücher'],['card-dream','💭','Träume'],['card-notes','📝','Notizen']
+  ];
+  function renderCardLaunch(){
+    const el = document.getElementById('cardLaunch'); if(!el) return;
+    el.innerHTML = CARD_TILES.map(([cls,em,label])=>
+      '<button type="button" class="clt" data-card="'+cls+'"><span class="clt-em">'+em+'</span><span class="clt-lb">'+label+'</span></button>'
+    ).join('');
+    el.querySelectorAll('.clt').forEach(btn=> btn.addEventListener('click', ()=>{
+      const cls = btn.dataset.card;
+      const card = document.querySelector('#kompassGrid > .'+cls);
+      const wasOpen = card && card.classList.contains('is-open');
+      // alle schließen (Akkordeon = ruhig)
+      document.querySelectorAll('#kompassGrid > .card.is-open').forEach(c=>c.classList.remove('is-open'));
+      el.querySelectorAll('.clt.on').forEach(b=>b.classList.remove('on'));
+      if(card && !wasOpen){
+        card.classList.add('is-open'); btn.classList.add('on');
+        card.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }
+    }));
+  }
 
   // „Heute"-Cockpit im Today-Planer-Stil: nächster Termin · heutige Aufgaben · Wellness.
   // Speist sich aus vorhandenen Daten (Kalender, zentrale Aufgaben, Gesundheit) – additiv.
@@ -3556,6 +3596,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     renderHero();
     renderWeekStrip();
     renderTodayCockpit();
+    renderCardLaunch();
     renderPhoto();
     renderFinance();
     renderCalendar();
