@@ -876,6 +876,15 @@ footer.foot{
   .level-tab{font-size:11.5px;padding:7px 10px;}
 }
 
+/* ---- Wochenleiste (Today-Planer) ---- */
+.week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:0 0 22px;}
+.week-strip .wd{text-align:center;padding:11px 0;border-radius:16px;background:var(--surface);border:1px solid var(--border);}
+.week-strip .wd .d{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;}
+.week-strip .wd .n{font-size:17px;font-weight:600;color:var(--text);margin-top:3px;font-family:'Inter Tight','Inter',sans-serif;}
+.week-strip .wd.on{background:var(--rose-deep);border-color:var(--rose-deep);}
+.week-strip .wd.on .d,.week-strip .wd.on .n{color:#fff;}
+@media(max-width:640px){.week-strip{gap:5px;} .week-strip .wd{padding:8px 0;border-radius:12px;} .week-strip .wd .n{font-size:15px;}}
+
 /* ---- Hub-Startseite ---- */
 .hub-intro{padding:6px 8px 22px;}
 .hub-intro h2{
@@ -1231,6 +1240,15 @@ input[type=file]{font-family:'Quicksand',sans-serif;font-size:13px;color:var(--t
 .jr-streak-lbl{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-faint);margin-top:2px;}
 .jr-streak-msg{font-size:12.5px;color:var(--text-dim);margin-left:auto;text-align:right;max-width:210px;}
 @media(max-width:520px){.jr-streak-msg{display:none;}}
+/* ---- Journal Rückblick: Soft Tiles ---- */
+.jr-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:0 0 10px;}
+@media(min-width:560px){.jr-tiles{grid-template-columns:repeat(4,1fr);}}
+.jr-tile{position:relative;border:1px solid var(--border);border-radius:16px;padding:16px 16px 14px;min-height:92px;display:flex;flex-direction:column;justify-content:flex-end;}
+.jr-tile .jt-em{position:absolute;top:12px;left:15px;font-size:19px;}
+.jr-tile .jt-val{position:absolute;top:12px;right:16px;font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:22px;color:var(--text);}
+.jr-tile .jt-lb{font-size:12px;color:var(--text);font-weight:600;line-height:1.25;}
+.jt-rose{background:var(--rose-soft);} .jt-sage{background:var(--sage-soft);} .jt-taupe{background:var(--sand-soft);}
+.jr-streak-hint{font-size:12.5px;color:var(--text-dim);margin:0 2px 16px;}
 .yn-btn{font-family:'Quicksand',sans-serif;font-size:12px;padding:5px 14px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-dim);cursor:pointer;}
 .yn-btn.active{background:var(--sage-deep);color:#FFFDF8;border-color:var(--sage-deep);}
 .range-toggle{display:flex;justify-content:center;gap:8px;margin-bottom:18px;}
@@ -1343,6 +1361,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 
   <!-- ===== KOMPASS-EBENE (bestehendes Dashboard) ===== -->
   <div id="viewKompass">
+
+  <div class="week-strip" id="weekStrip" aria-hidden="true"></div>
 
   <details class="settings" id="settingsPanel">
     <summary>Verbindungen (Google Sheet &amp; Google Kalender) — optional</summary>
@@ -2377,6 +2397,22 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     document.getElementById('todayDate').textContent =
       new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
   }
+
+  // Wochenleiste (Today-Planer-Look) – rein visuell, hebt den heutigen Tag hervor
+  function weekStripHtml(){
+    const WD = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+    const today = new Date(); today.setHours(0,0,0,0);
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - ((today.getDay()+6)%7));
+    let html = '';
+    for(let i=0;i<7;i++){
+      const d = new Date(monday); d.setDate(monday.getDate()+i);
+      const on = d.getTime()===today.getTime();
+      html += '<div class="wd'+(on?' on':'')+'"><div class="d">'+WD[i]+'</div><div class="n">'+d.getDate()+'</div></div>';
+    }
+    return html;
+  }
+  function renderWeekStrip(){ const el = document.getElementById('weekStrip'); if(el) el.innerHTML = weekStripHtml(); }
 
   // ================= FINANZEN =================
   const finForm = document.getElementById('financeForm');
@@ -3459,6 +3495,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       applyEmbeds();
     }
     renderHero();
+    renderWeekStrip();
     renderPhoto();
     renderFinance();
     renderCalendar();
@@ -4388,6 +4425,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           <p>Dein persönliches Gedächtnis und dein Denkraum — alles, was du weißt, planst, denkst und entwickelst.</p>
         </div>
 
+        <div class="week-strip" style="margin-bottom:20px;">${weekStripHtml()}</div>
+
         <div class="hub-search">
           <span class="ic">🔎</span>
           <input type="text" id="hubSearchInput" placeholder="Alles durchsuchen — Wissen, Ziele, Ideen, Erkenntnisse …" autocomplete="off">
@@ -5251,10 +5290,15 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         const avg=(l,k)=>{ const v=l.map(e=>e[k]).filter(x=>typeof x==='number'); return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):'–'; };
         const el=document.getElementById('jrView');
         el.innerHTML = `
-          <div class="card jr-streak"><div class="jr-flame">${streak>0?'🔥':'🌱'}</div><div><div class="jr-streak-num">${streak}</div><div class="jr-streak-lbl">${streak===1?'Tag in Folge':'Tage in Folge'}</div></div><div class="jr-streak-msg">${streakMessage(streak,!!entry)}</div></div>
+          <div class="jr-tiles">
+            <div class="jr-tile jt-rose"><span class="jt-em">${streak>0?'🔥':'🌱'}</span><span class="jt-val">${streak}</span><span class="jt-lb">${streak===1?'Tag in Folge':'Tage in Folge'}</span></div>
+            <div class="jr-tile jt-sage"><span class="jt-em">🙂</span><span class="jt-val">${avg(monthEntries,'mood')}</span><span class="jt-lb">Ø Stimmung</span></div>
+            <div class="jr-tile jt-taupe"><span class="jt-em">⚡</span><span class="jt-val">${avg(monthEntries,'energy')}</span><span class="jt-lb">Ø Energie</span></div>
+            <div class="jr-tile jt-rose"><span class="jt-em">🌊</span><span class="jt-val">${avg(monthEntries,'stress')}</span><span class="jt-lb">Ø Stress</span></div>
+          </div>
+          <p class="jr-streak-hint">${streakMessage(streak,!!entry)}</p>
           <div class="card"><div class="row-between"><p class="jr-label" style="margin:0;">Heute</p><button type="button" class="btn-text" id="goCheckin">${entry?'bearbeiten':'Check-in starten'}</button></div>${entry?`<div class="stat-grid" style="margin-top:14px;"><div class="stat-box"><div class="num">${entry.mood??'–'}</div><div class="lbl">Stimmung</div></div><div class="stat-box"><div class="num">${entry.energy??'–'}</div><div class="lbl">Energie</div></div><div class="stat-box"><div class="num">${entry.stress??'–'}</div><div class="lbl">Stress</div></div></div>`:`<p style="color:var(--text-faint);margin-top:10px;">Noch kein Check-in für heute — nimm dir einen Moment für dich.</p>`}</div>
           <div class="card"><p class="jr-label">Woche im Überblick</p>${weekEntries.length>1?`<div class="chart-box"><canvas id="dashWeekChart"></canvas></div>`:`<p style="color:var(--text-faint);">Noch nicht genug Daten diese Woche für einen Trend.</p>`}</div>
-          <div class="grid-2" style="margin-bottom:16px;"><div class="card" style="margin-bottom:0;"><div class="stat-box"><div class="num">${avg(monthEntries,'mood')}</div><div class="lbl">Ø Stimmung (Monat)</div></div></div><div class="card" style="margin-bottom:0;"><div class="stat-box"><div class="num">${avg(monthEntries,'energy')}</div><div class="lbl">Ø Energie (Monat)</div></div></div></div>
           <div class="card"><div class="row-between"><p class="jr-label" style="margin:0;">Zuletzt geschrieben</p></div>${recent.length?`<div style="margin-top:10px;">${recent.map(e=>`<div class="hub-list-item" data-open="${e.id}" data-type="journal" style="margin-bottom:8px;"><p class="hli-title">${escapeHtml(e.kind==='checkin'?('Check-in '+formatDateLong(e.date)):(e.title||('Eintrag '+e.date)))}</p>${e.journalText?`<p class="hli-body">${escapeHtml(e.journalText)}</p>`:''}<div class="hli-foot"><span class="tag">${e.date}</span></div></div>`).join('')}</div>`:`<p style="color:var(--text-faint);margin-top:8px;">Noch keine Einträge.</p>`}</div>
           <div class="card"><div class="row-between"><p class="jr-label" style="margin:0;">Letzte Erkenntnisse</p><button type="button" class="btn-text" id="goInsights">alle ansehen</button></div>${insights.length===0?`<p style="color:var(--text-faint);margin-top:10px;">Noch keine Erkenntnisse.</p>`:`<div style="margin-top:12px;">${insights.map(i=>`<div class="jr-insight"><p class="jr-insight-title">${escapeHtml(i.title)}</p><p class="jr-insight-desc">${escapeHtml(i.description)}</p></div>`).join('')}</div>`}</div>`;
         document.getElementById('goCheckin').addEventListener('click', ()=>showTab('checkin'));
