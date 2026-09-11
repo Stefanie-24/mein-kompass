@@ -885,6 +885,27 @@ footer.foot{
 .week-strip .wd.on .d,.week-strip .wd.on .n{color:#fff;}
 @media(max-width:640px){.week-strip{gap:5px;} .week-strip .wd{padding:8px 0;border-radius:12px;} .week-strip .wd .n{font-size:15px;}}
 
+/* ---- „Heute"-Cockpit (Today-Planer) ---- */
+.today-cockpit{margin:0 0 20px;}
+.tc-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
+@media(max-width:760px){.tc-grid{grid-template-columns:1fr;}}
+.tc-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;box-shadow:0 1px 3px rgba(75,70,60,0.04);}
+.tc-lbl{font-weight:700;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--rose-deep);margin:0 0 8px;}
+.tc-evt{font-size:16px;color:var(--text);font-weight:600;}
+.tc-ti{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.tc-ti:last-child{border-bottom:none;}
+.tc-circ{width:21px;height:21px;border-radius:50%;border:2px solid var(--bds,var(--border-strong));background:var(--surface);cursor:pointer;flex:none;}
+.tc-txt{flex:1;font-size:14.5px;color:var(--text);cursor:pointer;}
+.tc-over{font-size:10.5px;font-weight:600;color:var(--wine-deep);background:var(--wine-soft);border-radius:999px;padding:3px 9px;}
+.tc-empty{color:var(--text-faint);font-size:14px;margin:6px 0 0;}
+.tc-rings{display:flex;gap:12px;justify-content:space-around;}
+.tc-ring{text-align:center;}
+.tc-rc{width:74px;height:74px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;}
+.tc-in{width:56px;height:56px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.tc-rv{font-size:13px;font-weight:600;color:var(--text);}
+.tc-rl{font-size:11px;color:var(--text-dim);}
+.tc-hint{font-size:11.5px;color:var(--text-faint);margin:14px 0 0;line-height:1.5;}
+
 /* ---- Hub-Startseite ---- */
 .hub-intro{padding:6px 8px 22px;}
 .hub-intro h2{
@@ -1363,6 +1384,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   <div id="viewKompass">
 
   <div class="week-strip" id="weekStrip" aria-hidden="true"></div>
+
+  <section class="today-cockpit" id="todayCockpit"></section>
 
   <details class="settings" id="settingsPanel">
     <summary>Verbindungen (Google Sheet &amp; Google Kalender) — optional</summary>
@@ -2413,6 +2436,42 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     return html;
   }
   function renderWeekStrip(){ const el = document.getElementById('weekStrip'); if(el) el.innerHTML = weekStripHtml(); }
+
+  // „Heute"-Cockpit im Today-Planer-Stil: nächster Termin · heutige Aufgaben · Wellness.
+  // Speist sich aus vorhandenen Daten (Kalender, zentrale Aufgaben, Gesundheit) – additiv.
+  function tcRing(pct, emoji, val, label){
+    const deg = Math.round(Math.max(0,Math.min(100,pct))*3.6);
+    return '<div class="tc-ring"><div class="tc-rc" style="background:conic-gradient(var(--rose-deep) '+deg+'deg, var(--sage-soft) 0)"><div class="tc-in">'+emoji+'</div></div><div class="tc-rv">'+val+'</div><div class="tc-rl">'+label+'</div></div>';
+  }
+  function renderTodayCockpit(){
+    const el = document.getElementById('todayCockpit'); if(!el) return;
+    const today = todayISO();
+    // Nächster Termin
+    const ev = (typeof upcomingEvents==='function') ? upcomingEvents()[0] : null;
+    const evHtml = ev ? (dateFmtShort(ev.date)+(ev.time?' · '+ev.time:'')+' · '+escapeHtml(ev.title)) : 'Keine anstehenden Termine';
+    // Heutige/überfällige Aufgaben aus dem zentralen Aufgaben-System
+    const tasks = (typeof Hub!=='undefined' && Hub.cockpitTodayTasks) ? Hub.cockpitTodayTasks() : [];
+    const taskHtml = tasks.length
+      ? tasks.slice(0,6).map(t=>'<div class="tc-ti" data-task="'+t.id+'"><button type="button" class="tc-circ" data-toggle="'+t.id+'" aria-label="erledigt"></button><span class="tc-txt" data-open="'+t.id+'">'+escapeHtml(t.title)+'</span>'+(t.dueDate&&t.dueDate<today?'<span class="tc-over">überfällig</span>':'')+'</div>').join('')
+      : '<p class="tc-empty">Nichts fällig – genieß den Tag. 🌿</p>';
+    // Wellness aus heutiger Gesundheit
+    const h = (state.health||[]).find(x=>x.date===today) || {};
+    const water = typeof h.water==='number'?h.water:0;
+    const sleep = typeof h.sleep==='number'?h.sleep:0;
+    const moodTxt = h.mood ? h.mood.split(' ')[0] : '–';
+    const wellness = tcRing(Math.min(100,water/8*100),'💧',(h.water!=null?water+' Gl':'–'),'Wasser')
+      + tcRing(Math.min(100,sleep/8*100),'😴',(h.sleep!=null?sleep+' h':'–'),'Schlaf')
+      + tcRing(h.mood?100:0, moodTxt, h.mood?'':'—','Verfassung');
+    el.innerHTML =
+      '<div class="tc-grid">'
+      + '<div class="tc-card"><p class="tc-lbl">Nächster Termin</p><div class="tc-evt">'+evHtml+'</div>'
+      +   '<p class="tc-lbl" style="margin-top:16px;">Heute erledigen</p><div id="tcTasks">'+taskHtml+'</div></div>'
+      + '<div class="tc-card"><p class="tc-lbl">Wellness</p><div class="tc-rings">'+wellness+'</div>'
+      +   '<p class="tc-hint">Tippe unten in „Gesundheit", um Wasser, Schlaf &amp; Verfassung zu tracken.</p></div>'
+      + '</div>';
+    el.querySelectorAll('[data-toggle]').forEach(b=> b.addEventListener('click', ()=>{ if(typeof Hub!=='undefined'&&Hub.cockpitToggle){ Hub.cockpitToggle(b.dataset.toggle); renderTodayCockpit(); } }));
+    el.querySelectorAll('.tc-txt[data-open]').forEach(s=> s.addEventListener('click', ()=>{ if(typeof Hub!=='undefined'&&Hub.cockpitOpenTask) Hub.cockpitOpenTask(s.dataset.open); }));
+  }
 
   // ================= FINANZEN =================
   const finForm = document.getElementById('financeForm');
@@ -3496,6 +3555,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     }
     renderHero();
     renderWeekStrip();
+    renderTodayCockpit();
     renderPhoto();
     renderFinance();
     renderCalendar();
@@ -5525,7 +5585,20 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
     }
 
-    return { init, switchLevel, renderHome };
+    // ---- Cockpit-API (für die „Heute"-Übersicht auf dem Kompass) ----
+    function cockpitTodayTasks(){
+      const td = todayISO();
+      const rank={hoch:0,mittel:1,niedrig:2};
+      return list('task').filter(t=>t.status!=='erledigt' && t.dueDate && t.dueDate<=td)
+        .sort((a,b)=>((rank[a.priority]??1)-(rank[b.priority]??1)) || (a.dueDate||'').localeCompare(b.dueDate||''));
+    }
+    function cockpitToggle(id){
+      const t=list('task').find(x=>x.id===id); if(!t) return;
+      update('task', id, { status: t.status==='erledigt'?'offen':'erledigt', completedAt: t.status==='erledigt'?'':new Date().toISOString() });
+    }
+    function cockpitOpenTask(id){ Tasks.openDetail(id); }
+
+    return { init, switchLevel, renderHome, cockpitTodayTasks, cockpitToggle, cockpitOpenTask };
   })();
 
 })();
