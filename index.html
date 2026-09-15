@@ -953,7 +953,7 @@ footer.foot{
 #kCardBody > .card{margin:0;box-shadow:none;}
 /* Zwei Bild-Kacheln unter der Wochenleiste */
 .photo-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px;}
-.pduo-tile{position:relative;height:130px;border:1.5px solid var(--rose-deep);border-radius:9px;overflow:hidden;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.pduo-tile{position:relative;height:260px;border:1.5px solid var(--rose-deep);border-radius:9px;overflow:hidden;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .pduo-tile img{width:100%;height:100%;object-fit:cover;display:block;}
 .pduo-add{color:var(--rose-deep);font-weight:600;font-size:14px;}
 .pduo-del{position:absolute;top:7px;right:7px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(110,31,44,0.72);color:#fff;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;}
@@ -983,9 +983,9 @@ footer.foot{
 .hub-search .ic{color:var(--text-faint);font-size:15px;}
 
 .hub-areas{
-  display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:0 0 24px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 24px;
 }
-@media (max-width:640px){.hub-areas{grid-template-columns:1fr;}}
+@media (max-width:640px){.hub-areas{grid-template-columns:repeat(2,1fr);}}
 .area-card{
   text-align:left;cursor:pointer;
   background:var(--surface);border:1px solid var(--border);
@@ -1219,8 +1219,8 @@ input[type=file]{font-family:'Quicksand',sans-serif;font-size:13px;color:var(--t
 .area-journal{grid-column:1 / -1;border-top:3px solid var(--rose);}
 
 /* ---- Aufgaben-Bereich ---- */
-.area-aufgaben{grid-column:1 / -1;border-top:3px solid var(--rose-deep);}
-.area-arbeit{grid-column:1 / -1;border-top:3px solid var(--clay-deep);}
+.area-aufgaben{grid-column:auto;border-top:3px solid var(--rose-deep);}
+.area-arbeit{grid-column:auto;border-top:3px solid var(--clay-deep);}
 .w-status{font-size:10.5px;font-family:'Inter Tight','Inter',sans-serif;font-weight:600;border-radius:999px;padding:3px 9px;}
 .w-status-offen{background:var(--clay-soft);color:var(--clay-deep);}
 .w-status-erledigt{background:var(--sage-soft);color:var(--sage-deep);}
