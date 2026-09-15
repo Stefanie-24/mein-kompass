@@ -9,28 +9,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Quicksand:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root{
-  --bg:#F1EEE9;
-  --bg-soft:#F7F4EE;
-  --surface:#FBFAF6;
-  --surface-hover:#ECE7DF;
-  --border:rgba(75,70,60,0.14);
-  --border-strong:rgba(75,70,60,0.26);
-  --text:#3B3630;
-  --text-dim:#877F76;
-  --text-faint:#A99F94;
+  /* Beige Seite, Bordeaux-Schrift & -Akzente */
+  --bg:#EAE0CB;
+  --bg-soft:#F2EBDB;
+  --surface:#F6F0E3;
+  --surface-hover:#E4D8C0;
+  --border:rgba(110,31,44,0.24);
+  --border-strong:rgba(110,31,44,0.45);
+  --text:#6B2630;
+  --text-dim:#8F5A60;
+  --text-faint:#B08A8F;
 
-  --sand-deep:#A38B72;
-  --sand-soft:rgba(163,139,114,0.20);
+  --sand-deep:#9C6A70;
+  --sand-soft:rgba(156,106,112,0.16);
 
-  /* Hauptfarbe = Salbei (früher Rosé) */
-  --rose:#8FA389;
-  --rose-deep:#63795E;
-  --rose-soft:rgba(143,163,137,0.18);
+  /* Hauptfarbe = Bordeaux / Dunkelrot */
+  --rose:#9A3A48;
+  --rose-deep:#6E1F2C;
+  --rose-soft:rgba(110,31,44,0.12);
 
-  /* leiser Akzent = gedämpftes Rosé (z.B. Geburtstags-Knopf) */
-  --accent:#C58798;
-  --accent-deep:#9C5E70;
-  --accent-soft:rgba(197,135,152,0.18);
+  --accent:#A85668;
+  --accent-deep:#7A2E44;
+  --accent-soft:rgba(122,46,68,0.16);
 
   --gold:#C9A15A;
   --gold-deep:#9C7A38;
@@ -91,8 +91,8 @@ html{scroll-behavior:smooth;}
 body{
   margin:0;
   background:
-    radial-gradient(ellipse at top left, rgba(197,135,152,0.08), transparent 45%),
-    radial-gradient(ellipse at bottom right, rgba(143,163,137,0.12), transparent 45%),
+    radial-gradient(ellipse at top left, rgba(110,31,44,0.05), transparent 45%),
+    radial-gradient(ellipse at bottom right, rgba(156,106,112,0.07), transparent 45%),
     var(--bg);
   color:var(--text);
   font-family:'Quicksand',system-ui,sans-serif;
@@ -919,6 +919,27 @@ footer.foot{
 .grid.grid-collapsed > .card{display:none;}
 .grid.grid-collapsed > .card.is-open{display:flex;grid-column:1 / -1;}
 
+/* ==== Bordeaux/Beige-Redesign ==== */
+.bloom{display:none !important;}
+#viewKompass #weekStrip,
+#viewKompass #todayCockpit,
+#viewKompass .overview{display:none !important;}
+/* eckige Kacheln mit leicht gerundeten Kanten */
+.level-tab{border-radius:9px;}
+.clt{border-radius:9px;border:1.5px solid var(--rose-deep);}
+.clt.on{background:var(--rose-soft);}
+.card-launch{grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 0;}
+@media(max-width:820px){.card-launch{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:480px){.card-launch{grid-template-columns:repeat(2,1fr);}}
+.clt{padding:20px 10px;}
+.clt-lb{font-size:13px;}
+/* Hub-Kacheln bordeaux + eckig */
+.area-card{border-radius:9px;border:1.5px solid var(--rose-deep);}
+.area-aufgaben,.area-arbeit,.area-wissen,.area-ziele,.area-ideen,.area-ich,.area-linkcard{border-top:1.5px solid var(--rose-deep);}
+.hub-list-item{border-radius:9px;}
+/* Kompass-Kartenfenster */
+#kCardBody > .card{margin:0;box-shadow:none;}
+
 /* ---- Hub-Startseite ---- */
 .hub-intro{padding:6px 8px 22px;}
 .hub-intro h2{
@@ -1343,22 +1364,22 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 </script>
 </head>
 <body>
-<div id="loginOverlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle" style="display:none;position:fixed;inset:0;z-index:9999;background:#F1EEE9;align-items:center;justify-content:center;font-family:'Quicksand',system-ui,sans-serif;">
+<div id="loginOverlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle" style="display:none;position:fixed;inset:0;z-index:9999;background:#EAE0CB;align-items:center;justify-content:center;font-family:'Quicksand',system-ui,sans-serif;">
   <div style="background:#FFFDF8;border:1px solid rgba(75,70,60,0.14);border-radius:16px;padding:32px;max-width:380px;width:90%;box-shadow:0 4px 20px rgba(75,70,60,0.12);">
-    <p style="margin:0 0 4px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#63795E;">— Kompass —</p>
-    <h2 id="loginTitle" style="margin:0 0 20px;font-family:'Fraunces',serif;font-weight:500;font-size:26px;color:#3B3630;">Anmelden</h2>
+    <p style="margin:0 0 4px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#6E1F2C;">— Kompass —</p>
+    <h2 id="loginTitle" style="margin:0 0 20px;font-family:'Fraunces',serif;font-weight:500;font-size:26px;color:#6B2630;">Anmelden</h2>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
       <label for="loginEmail" style="font-size:11px;color:#A99F94;">E-Mail</label>
       <input type="email" id="loginEmail" autocomplete="email" placeholder="name@beispiel.de"
-        style="background:#F7F4EE;border:1px solid rgba(75,70,60,0.26);color:#3B3630;border-radius:8px;padding:9px 10px;font-family:'Quicksand',sans-serif;font-size:14px;">
+        style="background:#F7F4EE;border:1px solid rgba(75,70,60,0.26);color:#6B2630;border-radius:8px;padding:9px 10px;font-family:'Quicksand',sans-serif;font-size:14px;">
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:18px;">
       <label for="loginPassword" style="font-size:11px;color:#A99F94;">Passwort</label>
       <input type="password" id="loginPassword" autocomplete="current-password" placeholder="•••••••"
-        style="background:#F7F4EE;border:1px solid rgba(75,70,60,0.26);color:#3B3630;border-radius:8px;padding:9px 10px;font-family:'Quicksand',sans-serif;font-size:14px;">
+        style="background:#F7F4EE;border:1px solid rgba(75,70,60,0.26);color:#6B2630;border-radius:8px;padding:9px 10px;font-family:'Quicksand',sans-serif;font-size:14px;">
     </div>
     <button id="loginBtn" type="button"
-      style="background:#63795E;color:#FFF9F2;border:none;border-radius:8px;padding:11px;font-family:'Quicksand',sans-serif;font-weight:600;font-size:14px;cursor:pointer;width:100%;">Anmelden</button>
+      style="background:#6E1F2C;color:#FFF9F2;border:none;border-radius:8px;padding:11px;font-family:'Quicksand',sans-serif;font-weight:600;font-size:14px;cursor:pointer;width:100%;">Anmelden</button>
     <p id="loginError" role="alert" aria-live="assertive" style="margin:12px 0 0;color:#B5564F;font-size:12px;min-height:16px;"></p>
     <p style="margin:20px 0 0;font-size:11px;color:#A99F94;text-align:center;line-height:1.5;">
       Deine Daten werden über Firebase synchronisiert und sind über deinen Login geschützt.
@@ -1381,8 +1402,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   <div class="divider" role="presentation">
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
       <circle cx="8" cy="8" r="2.4" fill="#C9A15A"/>
-      <ellipse cx="8" cy="8" rx="3.6" ry="6" fill="none" stroke="#63795E" stroke-width="0.9" opacity="0.7"/>
-      <ellipse cx="8" cy="8" rx="6" ry="3.6" fill="none" stroke="#63795E" stroke-width="0.9" opacity="0.7"/>
+      <ellipse cx="8" cy="8" rx="3.6" ry="6" fill="none" stroke="#6E1F2C" stroke-width="0.9" opacity="0.7"/>
+      <ellipse cx="8" cy="8" rx="6" ry="3.6" fill="none" stroke="#6E1F2C" stroke-width="0.9" opacity="0.7"/>
     </svg>
   </div>
 
@@ -1852,6 +1873,14 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     </div>
     <span class="card-sub" id="birthdaySub" style="display:block;margin-bottom:8px;"></span>
     <ul class="entry-list" id="birthdayList"></ul>
+  </div>
+</div>
+
+<!-- ===== Kompass-Kartenfenster (öffnet eine Bereichs-Karte) ===== -->
+<div class="modal-overlay" id="kCardOverlay" style="display:none;">
+  <div class="modal modal-wide" role="dialog" aria-modal="true">
+    <button type="button" class="modal-close" id="kCardClose" aria-label="Schließen">✕</button>
+    <div id="kCardBody"></div>
   </div>
 </div>
 
@@ -2455,26 +2484,36 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   // Kachel-Leiste: räumt den Kompass auf. Jede Kachel öffnet genau ihre Detail-Karte.
   const CARD_TILES = [
     ['card-finance','💰','Finanzen'],['card-calendar','🗓️','Kalender'],['card-cycle','🌙','Zyklus'],
-    ['card-health','🩺','Gesundheit'],['card-habits','🔁','Gewohnheiten'],['card-photo','🖼️','Foto'],
-    ['card-book','✍️','Buch'],['card-reading','📚','Bücher'],['card-dream','💭','Träume'],['card-notes','📝','Notizen']
+    ['card-health','🩺','Gesundheit'],['card-book','✍️','Buch'],['card-dream','💭','Traumtagebuch'],
+    ['card-habits','🔁','Gewohnheiten'],['card-reading','📚','Bücher']
   ];
+  function openKompassCard(cls){
+    const card = document.querySelector('#kompassGrid > .'+cls) || document.querySelector('.'+cls);
+    const body = document.getElementById('kCardBody');
+    if(!card || !body) return;
+    card.classList.add('is-open');
+    body.appendChild(card);
+    document.getElementById('kCardOverlay').style.display = 'flex';
+  }
+  function closeKompassCard(){
+    const ov = document.getElementById('kCardOverlay'); if(!ov) return;
+    ov.style.display = 'none';
+    const body = document.getElementById('kCardBody');
+    const grid = document.getElementById('kompassGrid');
+    if(body && grid) [...body.children].forEach(c=>{ c.classList.remove('is-open'); grid.appendChild(c); });
+  }
   function renderCardLaunch(){
     const el = document.getElementById('cardLaunch'); if(!el) return;
     el.innerHTML = CARD_TILES.map(([cls,em,label])=>
       '<button type="button" class="clt" data-card="'+cls+'"><span class="clt-em">'+em+'</span><span class="clt-lb">'+label+'</span></button>'
     ).join('');
-    el.querySelectorAll('.clt').forEach(btn=> btn.addEventListener('click', ()=>{
-      const cls = btn.dataset.card;
-      const card = document.querySelector('#kompassGrid > .'+cls);
-      const wasOpen = card && card.classList.contains('is-open');
-      // alle schließen (Akkordeon = ruhig)
-      document.querySelectorAll('#kompassGrid > .card.is-open').forEach(c=>c.classList.remove('is-open'));
-      el.querySelectorAll('.clt.on').forEach(b=>b.classList.remove('on'));
-      if(card && !wasOpen){
-        card.classList.add('is-open'); btn.classList.add('on');
-        card.scrollIntoView({behavior:'smooth', block:'nearest'});
-      }
-    }));
+    el.querySelectorAll('.clt').forEach(btn=> btn.addEventListener('click', ()=>openKompassCard(btn.dataset.card)));
+    if(!renderCardLaunch._wired){
+      renderCardLaunch._wired = true;
+      const cb = document.getElementById('kCardClose'); if(cb) cb.addEventListener('click', closeKompassCard);
+      const ov = document.getElementById('kCardOverlay'); if(ov) ov.addEventListener('click', e=>{ if(e.target===ov) closeKompassCard(); });
+      document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeKompassCard(); });
+    }
   }
 
   // „Heute"-Cockpit im Today-Planer-Stil: nächster Termin · heutige Aufgaben · Wellness.
@@ -3848,9 +3887,9 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       const doc = "<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>"+escapeHtml(title)+"</title>"
         + "<style>"
         + "body{font-family:Arial,sans-serif;color:#2b2b2b;font-size:12pt;line-height:1.5;}"
-        + "h1{font-family:'Modern Love Caps',Arial,sans-serif;font-size:20pt;color:#3B3630;margin:0 0 4px;}"
-        + "h2{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#3B3630;margin:18px 0 6px;border-bottom:1px solid #e5ded4;padding-bottom:2px;}"
-        + "h3{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#3B3630;margin:14px 0 2px;}"
+        + "h1{font-family:'Modern Love Caps',Arial,sans-serif;font-size:20pt;color:#6B2630;margin:0 0 4px;}"
+        + "h2{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#6B2630;margin:18px 0 6px;border-bottom:1px solid #e5ded4;padding-bottom:2px;}"
+        + "h3{font-family:'Modern Love Caps',Arial,sans-serif;font-size:16pt;color:#6B2630;margin:14px 0 2px;}"
         + "p{font-family:Arial,sans-serif;font-size:12pt;margin:4px 0;}"
         + ".meta{font-family:Arial,sans-serif;color:#777777;font-size:10pt;margin:2px 0;}"
         + ".tags{font-family:Arial,sans-serif;color:#9C7A38;font-size:10pt;}"
@@ -4525,8 +4564,6 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
           <h2>🧠 Knowledge Hub</h2>
           <p>Dein persönliches Gedächtnis und dein Denkraum — alles, was du weißt, planst, denkst und entwickelst.</p>
         </div>
-
-        <div class="week-strip" style="margin-bottom:20px;">${weekStripHtml()}</div>
 
         <div class="hub-search">
           <span class="ic">🔎</span>
@@ -5257,7 +5294,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       // ---- Charts (mit Guard, falls Chart.js fehlt) ----
       const chartInstances={};
       function renderChart(id,cfg){ if(typeof Chart==='undefined') return; if(chartInstances[id]) chartInstances[id].destroy(); const ctx=document.getElementById(id); if(!ctx) return; chartInstances[id]=new Chart(ctx,cfg); }
-      const CC={ mood:'#63795E', energy:'#C9A15A', stress:'#9AA8C7', bar:'#7A9A56' };
+      const CC={ mood:'#6E1F2C', energy:'#C9A15A', stress:'#9AA8C7', bar:'#7A9A56' };
 
       // ---- Shell + interne Tabs ----
       const JR_TABS=[ ['checkin','📝 Heute'],['dashboard','📅 Rückblick'],['insights','🧠 Erkenntnisse'],['stats','📊 Statistik'],['settings','⚙️'] ];
