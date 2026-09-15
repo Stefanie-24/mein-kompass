@@ -7,9 +7,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Quicksand:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-/* Ganze Seite in der Display-Schrift „Anton" */
-body, body *:not(input):not(textarea):not(select){ font-family:'Anton', system-ui, sans-serif !important; letter-spacing:0.01em; }
-input, textarea, select{ font-family:'Anton', system-ui, sans-serif !important; }
+/* Ganze Seite in der Display-Schrift „Anton" — luftiger für angenehme Lesbarkeit */
+body, body *:not(input):not(textarea):not(select){ font-family:'Anton', system-ui, sans-serif !important; letter-spacing:0.035em !important; line-height:1.55 !important; word-spacing:0.06em; }
+input, textarea, select{ font-family:'Anton', system-ui, sans-serif !important; letter-spacing:0.035em !important; }
+/* Fließtext / kleine Labels etwas größer, damit nichts gedrückt wirkt */
+body{ font-size:16.5px !important; }
+p, li, .hub-list-item, .area-count, .card-sub, td, th, label, .clt-lb{ letter-spacing:0.045em !important; }
 
 :root{
   /* Beige Seite, Bordeaux-Schrift & -Akzente */
