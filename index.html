@@ -147,8 +147,7 @@ body{
 }
 .hero > *:not(.bloom){position:relative;z-index:1;}
 @media (max-width:640px){.bloom{width:65px;}}
-#logoutBtn{margin-right:105px;}
-@media (max-width:640px){#logoutBtn{margin-right:72px;}}
+#logoutBtn{margin-right:0 !important;padding:9px 20px !important;font-size:13.5px !important;font-weight:600;color:var(--rose-deep) !important;border-color:var(--rose-deep) !important;}
 
 .divider{
   display:flex;
@@ -949,6 +948,13 @@ footer.foot{
 .hub-list-item{border-radius:9px;}
 /* Kompass-Kartenfenster */
 #kCardBody > .card{margin:0;box-shadow:none;}
+/* Zwei Bild-Kacheln unter der Wochenleiste */
+.photo-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px;}
+.pduo-tile{position:relative;height:130px;border:1.5px solid var(--rose-deep);border-radius:9px;overflow:hidden;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.pduo-tile img{width:100%;height:100%;object-fit:cover;display:block;}
+.pduo-add{color:var(--rose-deep);font-weight:600;font-size:14px;}
+.pduo-del{position:absolute;top:7px;right:7px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(110,31,44,0.72);color:#fff;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;}
+.pduo-del:hover{background:var(--rose-deep);}
 
 /* ---- Hub-Startseite ---- */
 .hub-intro{padding:6px 8px 22px;}
@@ -1428,6 +1434,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   <div id="viewKompass">
 
   <div class="week-strip" id="weekStrip" aria-hidden="true"></div>
+
+  <div class="photo-duo" id="photoDuo"></div>
 
   <section class="today-cockpit" id="todayCockpit"></section>
 
@@ -2036,6 +2044,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     photo:'kompass_photo',
     photoRatio:'kompass_photo_ratio',
     uniNotes:'kompass_uni_notes',
+    photosDuo:'kompass_photos_duo',
     // ---- Knowledge Hub ----
     hubKnowledge:'kompass_hub_knowledge',
     hubGoals:'kompass_hub_goals',
@@ -2171,6 +2180,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     photoRatio: load(KEYS.photoRatio, null),
     birthdays: load(KEYS.birthdays, []),
     uniNotes: load(KEYS.uniNotes, []),
+    photosDuo: load(KEYS.photosDuo, []),
     settings: load(KEYS.settings, {apiKey:'', sheetId:'', sheetRange:'', calendarId:'', sheetEmbed:'', calendarEmbed:''}),
     financeSheet: [],   // zuletzt geladene Zeilen aus dem Google Sheet (nicht dauerhaft gespeichert)
     financeSheetBalance: null, // optional: direkt aus Sheet-Zelle geholter Kontostand
@@ -2490,6 +2500,58 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     return html;
   }
   function renderWeekStrip(){ const el = document.getElementById('weekStrip'); if(el) el.innerHTML = weekStripHtml(); }
+
+  // Zwei kleine Bild-Kacheln nebeneinander (unter der Wochenleiste)
+  function compressPhoto(file, cb){
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w=img.width, h=img.height, max=1000;
+        if(w>=h && w>max){ h=Math.round(h*max/w); w=max; } else if(h>w && h>max){ w=Math.round(w*max/h); h=max; }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        const ctx=c.getContext('2d'); if(!ctx){ cb(reader.result); return; }
+        ctx.drawImage(img,0,0,w,h);
+        try{ cb(c.toDataURL('image/jpeg',0.72)); }catch(e){ cb(reader.result); }
+      };
+      img.onerror=()=>cb(null); img.src=reader.result;
+    };
+    reader.onerror=()=>cb(null); reader.readAsDataURL(file);
+  }
+  function renderPhotoDuo(){
+    const el = document.getElementById('photoDuo'); if(!el) return;
+    const arr = state.photosDuo || [];
+    let html = '';
+    for(let i=0;i<2;i++){
+      const src = arr[i];
+      html += '<div class="pduo-tile" data-slot="'+i+'">'
+        + (src ? '<img src="'+src+'" alt="Bild '+(i+1)+'"><button type="button" class="pduo-del" data-del="'+i+'" aria-label="Bild entfernen">✕</button>'
+               : '<span class="pduo-add">＋ Bild</span>')
+        + '<input type="file" accept="image/*" class="pduo-input" data-input="'+i+'" style="display:none">'
+        + '</div>';
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.pduo-tile').forEach(tile=>{
+      const slot = Number(tile.dataset.slot);
+      const input = tile.querySelector('.pduo-input');
+      tile.addEventListener('click', (e)=>{ if(e.target.closest('.pduo-del')) return; input.click(); });
+      input.addEventListener('change', (e)=>{
+        const f = e.target.files && e.target.files[0]; if(!f) return;
+        compressPhoto(f, (dataUrl)=>{
+          if(!dataUrl){ showToast('Bild konnte nicht geladen werden'); return; }
+          state.photosDuo = state.photosDuo || [];
+          state.photosDuo[slot] = dataUrl;
+          save(KEYS.photosDuo, state.photosDuo);
+          renderPhotoDuo();
+        });
+      });
+    });
+    el.querySelectorAll('.pduo-del').forEach(b=> b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const slot = Number(b.dataset.del);
+      if(state.photosDuo){ state.photosDuo[slot] = null; save(KEYS.photosDuo, state.photosDuo); renderPhotoDuo(); }
+    }));
+  }
 
   // Kachel-Leiste: räumt den Kompass auf. Jede Kachel öffnet genau ihre Detail-Karte.
   const CARD_TILES = [
@@ -3644,6 +3706,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     }
     renderHero();
     renderWeekStrip();
+    renderPhotoDuo();
     renderTodayCockpit();
     renderCardLaunch();
     renderPhoto();
