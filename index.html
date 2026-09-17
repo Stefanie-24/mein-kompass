@@ -22,6 +22,8 @@ p, li, .hub-list-item, td, th, label, input, textarea, select, button{ font-size
 #viewHub .area-count{ font-size:14.5px !important; font-weight:500 !important; }
 #viewHub .hub-list-item, #viewHub p, #viewHub li, #viewHub .link-card-url{ font-size:16px !important; font-weight:500 !important; }
 #viewHub .hub-intro h2{ font-size:30px !important; font-weight:700 !important; }
+#viewHub .hub-group-title{ font-size:16px !important; font-weight:700 !important; color:var(--rose-deep) !important; letter-spacing:.02em !important; margin:22px 2px 12px !important; }
+#viewHub .hub-group-title:first-of-type{ margin-top:6px !important; }
 
 :root{
   /* Beige Seite, Bordeaux-Schrift & -Akzente */
@@ -919,6 +921,14 @@ footer.foot{
 .tc-rv{font-size:13px;font-weight:600;color:var(--text);}
 .tc-rl{font-size:11px;color:var(--text-dim);}
 .tc-hint{font-size:11.5px;color:var(--text-faint);margin:14px 0 0;line-height:1.5;}
+.tc-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 8px;flex-wrap:wrap;}
+.tc-head .tc-lbl{margin:0;}
+.tc-count{font-size:12px;font-weight:600;color:var(--text-dim);}
+.tc-next{margin-top:16px;}
+.tc-next .tc-lbl{margin:0 0 6px;}
+.tc-evt-empty{font-size:14px;color:var(--text-dim);line-height:1.5;}
+.k-section-title{font-family:'Anton',system-ui,sans-serif;font-weight:400;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--rose-deep);margin:6px 2px 12px;}
+.k-section-title-sm{font-size:12.5px;color:var(--text-dim);margin:2px 2px 8px;}
 
 /* ---- Kachel-Leiste + eingeklappte Detail-Karten ---- */
 .card-launch{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:0 0 8px;}
@@ -965,7 +975,7 @@ footer.foot{
 #kCardBody > .card{margin:0;box-shadow:none;}
 /* Zwei Bild-Kacheln unter der Wochenleiste */
 .photo-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px;}
-.pduo-tile{position:relative;height:260px;border:1.5px solid var(--rose-deep);border-radius:9px;overflow:hidden;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.pduo-tile{position:relative;height:150px;border:1.5px solid var(--rose-deep);border-radius:9px;overflow:hidden;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .pduo-tile img{width:100%;height:100%;object-fit:cover;display:block;}
 .pduo-add{color:var(--rose-deep);font-weight:600;font-size:14px;}
 .pduo-del{position:absolute;top:7px;right:7px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(110,31,44,0.72);color:#fff;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;}
@@ -1261,6 +1271,9 @@ input[type=file]{font-family:'Quicksand',sans-serif;font-size:13px;color:var(--t
 .t-fchip{border:1px solid var(--border-strong);background:var(--surface);color:var(--text-dim);border-radius:999px;padding:5px 11px;font-size:11.5px;font-family:'Quicksand',sans-serif;font-weight:600;cursor:pointer;transition:background .12s ease,color .12s ease;}
 .t-fchip:hover:not(.active){background:var(--surface-hover);}
 .t-fchip.active{background:var(--sky-deep);color:#FFFDF8;border-color:var(--sky-deep);}
+.t-filters-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.t-fchip-toggle{border-style:dashed;}
+.t-fchips-prio{padding-top:2px;}
 
 .t-row{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;transition:background .12s ease;}
 .t-row:hover{background:var(--bg-soft);}
@@ -1455,7 +1468,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   <section class="today-cockpit" id="todayCockpit"></section>
 
   <details class="settings" id="settingsPanel">
-    <summary>Verbindungen (Google Sheet &amp; Google Kalender) — optional</summary>
+    <summary>⚙ Einstellungen &amp; Verbindungen (Google Sheet &amp; Kalender) — optional</summary>
     <div class="settings-body">
       <p class="settings-hint">
         Für den Lesezugriff brauchst du einen <strong>Google API-Schlüssel</strong> (Google Cloud Console → APIs &amp; Dienste → Anmeldedaten → API-Schlüssel erstellen, dabei „Google Sheets API“ und „Google Calendar API“ aktivieren). Dein Sheet muss auf „Jeder mit dem Link – Betrachter“ freigegeben sein, dein Kalender auf „öffentlich verfügbar machen“ (Kalendereinstellungen → Zugriffsrechte). Der Schlüssel wird nur lokal in deinem Browser gespeichert.
@@ -2571,7 +2584,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
   // Kachel-Leiste: räumt den Kompass auf. Jede Kachel öffnet genau ihre Detail-Karte.
   const CARD_TILES = [
     ['card-finance','💰','Finanzen'],['card-calendar','🗓️','Kalender'],['card-cycle','🌙','Zyklus'],
-    ['card-health','🩺','Gesundheit'],['card-book','✍️','Buch'],['card-dream','💭','Traumtagebuch'],
+    ['card-health','🩺','Gesundheit'],['card-book','✍️','Mein Buch'],['card-dream','💭','Träume'],
     ['card-habits','🔁','Gewohnheiten'],['card-reading','📚','Bücher']
   ];
   function openKompassCard(cls){
@@ -2589,6 +2602,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     const grid = document.getElementById('kompassGrid');
     if(body && grid) [...body.children].forEach(c=>{ c.classList.remove('is-open'); grid.appendChild(c); });
   }
+  // Für Quick-Add von jeder Ebene erreichbar machen (öffnet die bestehenden Karten-Formulare):
+  window.openKompassCard = openKompassCard;
   function renderCardLaunch(){
     const el = document.getElementById('cardLaunch'); if(!el) return;
     el.innerHTML = CARD_TILES.map(([cls,em,label])=>
@@ -2609,32 +2624,63 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
     const deg = Math.round(Math.max(0,Math.min(100,pct))*3.6);
     return '<div class="tc-ring"><div class="tc-rc" style="background:conic-gradient(var(--rose-deep) '+deg+'deg, var(--sage-soft) 0)"><div class="tc-in">'+emoji+'</div></div><div class="tc-rv">'+val+'</div><div class="tc-rl">'+label+'</div></div>';
   }
+  // Dashboard-Reihenfolge optimieren (additiv, ohne Funktionsverlust):
+  // Uni direkt nach dem Cockpit, „Schnellzugriff"-Überschrift vor die Kacheln,
+  // „Momente"-Überschrift über die Fotos, Verbindungen unauffällig ans Ende.
+  function reorderKompass(){
+    const view = document.getElementById('viewKompass'); if(!view || view._reordered) return;
+    const cockpit = document.getElementById('todayCockpit');
+    const uni = document.getElementById('uniLaunch');
+    const launch = document.getElementById('cardLaunch');
+    const settings = document.getElementById('settingsPanel');
+    const photoDuo = document.getElementById('photoDuo');
+    if(cockpit && uni) cockpit.after(uni);
+    if(launch && !document.getElementById('quickAccessTitle')){
+      const h = document.createElement('h2');
+      h.id = 'quickAccessTitle'; h.className = 'k-section-title'; h.textContent = 'Schnellzugriff';
+      launch.before(h);
+    }
+    if(photoDuo && !document.getElementById('momenteTitle')){
+      const m = document.createElement('h2');
+      m.id = 'momenteTitle'; m.className = 'k-section-title k-section-title-sm'; m.textContent = 'Momente';
+      photoDuo.before(m);
+    }
+    if(settings){ view.appendChild(settings); }  // Verbindungen ganz nach unten
+    view._reordered = true;
+  }
+
   function renderTodayCockpit(){
     const el = document.getElementById('todayCockpit'); if(!el) return;
     const today = todayISO();
-    // Nächster Termin
-    const ev = (typeof upcomingEvents==='function') ? upcomingEvents()[0] : null;
-    const evHtml = ev ? (dateFmtShort(ev.date)+(ev.time?' · '+ev.time:'')+' · '+escapeHtml(ev.title)) : 'Keine anstehenden Termine';
     // Heutige/überfällige Aufgaben aus dem zentralen Aufgaben-System
     const tasks = (typeof Hub!=='undefined' && Hub.cockpitTodayTasks) ? Hub.cockpitTodayTasks() : [];
+    const overdueCount = tasks.filter(t=>t.dueDate && t.dueDate<today).length;
+    const countTxt = tasks.length
+      ? tasks.length+' '+(tasks.length===1?'Aufgabe':'Aufgaben')+(overdueCount?' · '+overdueCount+' überfällig':'')
+      : 'Alles erledigt';
     const taskHtml = tasks.length
       ? tasks.slice(0,6).map(t=>'<div class="tc-ti" data-task="'+t.id+'"><button type="button" class="tc-circ" data-toggle="'+t.id+'" aria-label="erledigt"></button><span class="tc-txt" data-open="'+t.id+'">'+escapeHtml(t.title)+'</span>'+(t.dueDate&&t.dueDate<today?'<span class="tc-over">überfällig</span>':'')+'</div>').join('')
-      : '<p class="tc-empty">Nichts fällig – genieß den Tag. 🌿</p>';
+      : '<p class="tc-empty">Für heute ist nichts fällig. 🌱</p>';
     // Wellness aus heutiger Gesundheit
     const h = (state.health||[]).find(x=>x.date===today) || {};
-    const water = typeof h.water==='number'?h.water:0;
-    const sleep = typeof h.sleep==='number'?h.sleep:0;
+    const water = typeof h.water==='number'?h.water:null;
+    const sleep = typeof h.sleep==='number'?h.sleep:null;
     const moodTxt = h.mood ? h.mood.split(' ')[0] : '–';
-    const wellness = tcRing(Math.min(100,water/8*100),'💧',(h.water!=null?water+' Gl':'–'),'Wasser')
-      + tcRing(Math.min(100,sleep/8*100),'😴',(h.sleep!=null?sleep+' h':'–'),'Schlaf')
-      + tcRing(h.mood?100:0, moodTxt, h.mood?'':'—','Verfassung');
+    const wellness = tcRing(water!=null?Math.min(100,water/8*100):0,'💧',(water!=null?water+' Gl':'–'),'Wasser')
+      + tcRing(sleep!=null?Math.min(100,sleep/8*100):0,'😴',(sleep!=null?sleep+' h':'–'),'Schlaf')
+      + tcRing(h.mood?100:0, moodTxt, h.mood?'':'—','Stimmung');
+    // Nächster Termin
+    const ev = (typeof upcomingEvents==='function') ? upcomingEvents()[0] : null;
+    const evHtml = ev
+      ? '<div class="tc-evt">'+dateFmtShort(ev.date)+(ev.time?' · '+ev.time:'')+' · '+escapeHtml(ev.title)+'</div>'
+      : '<div class="tc-evt-empty">Keine anstehenden Termine. Ein bisschen Luft im Kalender tut auch gut. 🌿</div>';
     el.innerHTML =
       '<div class="tc-grid">'
-      + '<div class="tc-card"><p class="tc-lbl">Nächster Termin</p><div class="tc-evt">'+evHtml+'</div>'
-      +   '<p class="tc-lbl" style="margin-top:16px;">Heute erledigen</p><div id="tcTasks">'+taskHtml+'</div></div>'
-      + '<div class="tc-card"><p class="tc-lbl">Wellness</p><div class="tc-rings">'+wellness+'</div>'
-      +   '<p class="tc-hint">Tippe unten in „Gesundheit", um Wasser, Schlaf &amp; Verfassung zu tracken.</p></div>'
-      + '</div>';
+      + '<div class="tc-card"><div class="tc-head"><p class="tc-lbl">📌 Heute</p><span class="tc-count">'+countTxt+'</span></div><div id="tcTasks">'+taskHtml+'</div></div>'
+      + '<div class="tc-card"><p class="tc-lbl">🌿 Wellness</p><div class="tc-rings">'+wellness+'</div>'
+      +   '<p class="tc-hint">Tippe unten in „Gesundheit", um Wasser, Schlaf &amp; Stimmung zu tracken.</p></div>'
+      + '</div>'
+      + '<div class="tc-card tc-next"><p class="tc-lbl">📅 Nächster Termin</p>'+evHtml+'</div>';
     el.querySelectorAll('[data-toggle]').forEach(b=> b.addEventListener('click', ()=>{ if(typeof Hub!=='undefined'&&Hub.cockpitToggle){ Hub.cockpitToggle(b.dataset.toggle); renderTodayCockpit(); } }));
     el.querySelectorAll('.tc-txt[data-open]').forEach(s=> s.addEventListener('click', ()=>{ if(typeof Hub!=='undefined'&&Hub.cockpitOpenTask) Hub.cockpitOpenTask(s.dataset.open); }));
   }
@@ -3720,6 +3766,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       applyEmbeds();
     }
     renderHero();
+    reorderKompass();
     renderWeekStrip();
     renderPhotoDuo();
     renderTodayCockpit();
@@ -4058,10 +4105,20 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 
     // ---- Quick Add ----
     const QUICK_ORDER = ['task','knowledge','goal','idea','project','insight','journal','inbox'];
+    // Quick-Add: die wichtigsten Schnellaktionen von jeder Ebene aus.
+    // task/idea/knowledge/journal → Hub-Formulare; termin/finance → bestehende Kompass-Karten.
+    const QUICK_ITEMS = [
+      {k:'task',      emoji:'✅', label:'Aufgabe'},
+      {k:'termin',    emoji:'📅', label:'Termin'},
+      {k:'idea',      emoji:'💡', label:'Idee'},
+      {k:'knowledge', emoji:'📚', label:'Wissen'},
+      {k:'journal',   emoji:'📔', label:'Journal'},
+      {k:'finance',   emoji:'💰', label:'Finanzeintrag'}
+    ];
     function openQuickAdd(){
-      const opts = QUICK_ORDER.map(t=>`
-        <button type="button" class="qa-option" data-qa="${t}">
-          <span class="qa-emoji">${TYPES[t].emoji}</span> ${TYPES[t].label}
+      const opts = QUICK_ITEMS.map(it=>`
+        <button type="button" class="qa-option" data-qa="${it.k}">
+          <span class="qa-emoji">${it.emoji}</span> ${it.label}
         </button>`).join('');
       openModal(`
         <h3 id="modalTitle">Was möchtest du hinzufügen?</h3>
@@ -4070,8 +4127,11 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       `);
       contentEl().querySelectorAll('[data-qa]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
-          if(btn.dataset.qa==='task') Tasks.openForm();
-          else openForm(btn.dataset.qa);
+          const k = btn.dataset.qa;
+          if(k==='task'){ Tasks.openForm(); return; }
+          if(k==='termin'){ closeModal(); if(window.openKompassCard){ window.openKompassCard('card-calendar'); setTimeout(()=>{ const f=document.getElementById('calTitle'); if(f) f.focus(); },80); } return; }
+          if(k==='finance'){ closeModal(); if(window.openKompassCard){ window.openKompassCard('card-finance'); setTimeout(()=>{ const f=document.getElementById('finAmount'); if(f) f.focus(); },80); } return; }
+          openForm(k);
         });
       });
     }
@@ -4659,18 +4719,13 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         </div>
         <div id="hubSearchResults"></div>
 
+        <h3 class="hub-group-title">🧠 Denken &amp; Planen</h3>
         <div class="hub-areas">
           <button type="button" class="area-card area-aufgaben" data-area="aufgaben">
             <span class="area-emoji">✅</span>
             <h3>Aufgaben</h3>
             <p class="area-desc">Was du konkret zu tun hast — heute, diese Woche, nach Projekt.</p>
             <span class="area-count" id="areaTaskCount"></span>
-          </button>
-          <button type="button" class="area-card area-wissen" data-area="wissen">
-            <span class="area-emoji">📚</span>
-            <h3>Wissen</h3>
-            <p class="area-desc">Was du weißt und behalten möchtest.</p>
-            <span class="area-count">${c.knowledge} ${c.knowledge===1?'Eintrag':'Einträge'}</span>
           </button>
           <button type="button" class="area-card area-ziele" data-area="ziele">
             <span class="area-emoji">🎯</span>
@@ -4684,15 +4739,29 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
             <p class="area-desc">Was dir einfällt und vielleicht später relevant wird.</p>
             <span class="area-count">${c.idea} ${c.idea===1?'Idee':'Ideen'}</span>
           </button>
+        </div>
+
+        <h3 class="hub-group-title">📚 Wissen &amp; Lernen</h3>
+        <div class="hub-areas">
+          <button type="button" class="area-card area-wissen" data-area="wissen">
+            <span class="area-emoji">📚</span>
+            <h3>Wissen</h3>
+            <p class="area-desc">Was du weißt und behalten möchtest.</p>
+            <span class="area-count">${c.knowledge} ${c.knowledge===1?'Eintrag':'Einträge'}</span>
+          </button>
+          ${linkCardHtml('lernen')}
+          ${linkCardHtml('schreiben')}
+        </div>
+
+        <h3 class="hub-group-title">🌱 Persönlich</h3>
+        <div class="hub-areas">
           <button type="button" class="area-card area-ich" data-area="ich">
             <span class="area-emoji">🌱</span>
             <h3>Ich</h3>
             <p class="area-desc">Was du über dich und deine Entwicklung gelernt hast.</p>
             <span class="area-count">${c.insight} ${c.insight===1?'Erkenntnis':'Erkenntnisse'}</span>
           </button>
-          ${linkCardHtml('lernen')}
           ${linkCardHtml('food')}
-          ${linkCardHtml('schreiben')}
           <button type="button" class="area-card area-arbeit" data-area="arbeit">
             <span class="area-emoji">🕒</span>
             <h3>Arbeitszeiten</h3>
@@ -5054,6 +5123,7 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
       // ---- State ----
       let view='heute';
       let filters={area:'',prio:''};
+      let showPrioFilter=false;
       let active=false;
 
       function open(){ active=true; view='heute'; filters={area:'',prio:''}; render(); }
@@ -5149,8 +5219,11 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
 
           <div class="t-filters">
             <div class="t-fchips">${areaChips}</div>
-            <div class="t-fchips">${prioChips}</div>
-            ${(filters.area||filters.prio)?`<button type="button" class="btn-text" id="tReset">Filter zurücksetzen</button>`:''}
+            <div class="t-filters-row">
+              <button type="button" class="t-fchip t-fchip-toggle${(showPrioFilter||filters.prio)?' active':''}" id="tPrioToggle">⚙ Filter${filters.prio?' · '+PRIO[filters.prio].label:''}</button>
+              ${(filters.area||filters.prio)?`<button type="button" class="btn-text" id="tReset">Filter zurücksetzen</button>`:''}
+            </div>
+            ${(showPrioFilter||filters.prio)?`<div class="t-fchips t-fchips-prio">${prioChips}</div>`:''}
           </div>
 
           <div id="tList">${body}</div>
@@ -5161,7 +5234,8 @@ window.dispatchEvent(new CustomEvent('kompass-boot'));
         document.getElementById('tViewTabs').addEventListener('click', e=>{ const b=e.target.closest('[data-tview]'); if(b){ view=b.dataset.tview; render(); } });
         root.querySelectorAll('[data-farea]').forEach(b=> b.addEventListener('click', ()=>{ filters.area = (filters.area===b.dataset.farea?'':b.dataset.farea); render(); }));
         root.querySelectorAll('[data-fprio]').forEach(b=> b.addEventListener('click', ()=>{ filters.prio = (filters.prio===b.dataset.fprio?'':b.dataset.fprio); render(); }));
-        const rst=document.getElementById('tReset'); if(rst) rst.addEventListener('click', ()=>{ filters={area:'',prio:''}; render(); });
+        const prioTog=document.getElementById('tPrioToggle'); if(prioTog) prioTog.addEventListener('click', ()=>{ showPrioFilter=!showPrioFilter; if(!showPrioFilter) filters.prio=''; render(); });
+        const rst=document.getElementById('tReset'); if(rst) rst.addEventListener('click', ()=>{ filters={area:'',prio:''}; showPrioFilter=false; render(); });
         root.querySelectorAll('[data-tcheck]').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); toggleDone(b.dataset.tcheck); render(); }));
         root.querySelectorAll('[data-topen]').forEach(el=> el.addEventListener('click', ()=>openDetail(el.dataset.topen)));
       }
